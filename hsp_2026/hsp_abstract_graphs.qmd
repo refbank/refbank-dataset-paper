@@ -1,0 +1,317 @@
+---
+title: "refbank-analysis"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(refbankr)
+```
+
+```{r}
+get_current_version()
+
+get_datasets()
+
+trials <- get_trials()
+```
+```{r}
+
+
+```
+
+# Big table of status
+
+Want 
+* dataset name/citation
+* group-size/modality/description
+* # games
+* # trials
+* # words
+"total"
+
+mention when images are available 
+
+possibly also an "in pipeline summary"
+
+
+```{r}
+extant <- get_dataset_summary() |> left_join(get_datasets())
+
+for_table <- extant |> group_by(dataset_id, short_cite, full_cite, modality, partner_constancy) |>
+  summarize(games=sum(total_num_games),
+            trials=sum(total_num_trials),
+            words=sum(total_num_words),
+            players=sum(total_num_players),
+            min_group_size=min(group_size),
+            max_group_size=max(group_size)
+            ) |> 
+  mutate(
+    group_size=case_when(
+      min_group_size==max_group_size ~ as.character(min_group_size),
+      T ~ str_c(min_group_size, " - ", max_group_size)
+    )) |> 
+  filter(words>0) |> 
+  mutate(comments="")
+
+for_table |> select(-dataset_id, -full_cite)
+
+for_table |> distinct(full_cite)  
+
+for_table |> ungroup() |> 
+  summarize(across(c(games, trials, words, players), sum),
+            datasets=n())
+
+for_table |> ungroup() |> filter(modality=="oral-in-person") |> 
+  summarize(across(c(games, trials, words, players), sum),
+            datasets=n())
+```
+
+
+```{r}
+# future imports
+
+tribble(
+  ~dataset, ~trials, ~games, ~players, ~words,
+  "fmri", 18 * 6 * 22, 22, 44, 18 * 6 * 22 * 8,
+  "delphine1", 960, 20, 40, 960 * 8,
+  "delphine2", 960, 20, 40, 960 * 8,
+  "adrianfrench", 40 * 52, 52, 104, 40 * 52 * 8,
+  "adrianswissgerman", 8 * 12 * 19, 19, 38, 8 * 12 * 19 * 8,
+  "camerer", 8*30*11, 11, 44, 8*30*11*8,
+) |> summarize(trial = sum(trials), games = sum(games), players = sum(players), words = sum(words))
+
+```
+Refbank currently has language data from 12 datasets, including 1.3 million words from 126K referential trials from 2390 games and 4770 participants. Roughly half of the data comes from 7 datasets with online experiments where participants communicated via written messages, and half from 5 datasets with in-person experiments where participants spoke face-to-face, including 1 dataset in Dutch. We are also in the process of adding an additional 6 datasets (4 English, 1 Swiss German, 1 French) of in-person spoken interaction, comprising 10,000 trials (150 games).
+
+# Reduction plot
+
+```{r}
+df <- get_per_game_summary()
+
+theme_set(theme_bw(base_size = 14) +
+  theme(
+    strip.background = element_blank(),
+    panel.grid = element_blank()
+  ))
+
+GRP_SIZE_COL_SCALE <- scale_colour_manual( # clearly viridis inspired, but I can't id actual palette
+  values = c(
+    "1" = "#dce319", "2" = "#73d055", "3" = "#29af7f",
+    "4" = "#238a8d", "5" = "#33638d", "6" = "#453781",
+    "7" = "#440154"
+  )
+)
+
+STRUCT_COL_SCALE <- scale_colour_manual(
+  values = c(
+    "0.5" = "#fbb4ae", "1" = "#fed9a6",
+    "1.5" = "#e5d8bd", "2" = "#ccebc5",
+    "2.5" = "#b3cde3", "3" = "#decbe4",
+    "3.5" = "#fddaec"
+  )
+)
+
+OPT_SIZE_COL_SCALE <- scale_colour_manual( # viridis magma 10 pt without end points
+  values = c(
+    "2" = "#fec98d", "4" = "#FD9567", "6" = "#F1605D",
+    "8" = "#CD4071", "10" = "#9F2F7F", "12" = "#721F81",
+    "14" = "#451077", "16" = "#221150"
+  )
+)
+```
+
+```{r}
+
+option_sizes <- sort(unique(df$option_size))
+
+groupings <- c(
+  "Dataset" = "dataset_id", "Group size" = "group_size",
+  "Information availability" = "information_availability_composite", "Option set size" = "option_size",
+  "Modality" = "modality", "Backchannel" = "backchannel", "Feedback" = "feedback", "Role constancy" = "role_constancy"
+)
+
+facetings <- c(
+  "None" = "dataset_id", "Group size" = "group_size",
+  "Information availability" = "information_availability_composite", "Option set size" = "option_size",
+  "Modality" = "modality", "Backchannel" = "backchannel", "Feedback" = "feedback", "Role constancy" = "role_constancy"
+)
+
+make_line_plot <- function(df, y, grouping, faceting, indiv_lines, stage_one_only,
+                           title, y_lab, legend_pos) {
+  p <- ggplot(
+    df,
+    aes(
+      x = rep_num, y = .data[[y]],
+      color = as.factor(.data[[grouping]])
+    )
+  )
+
+  if (indiv_lines) {
+    p <- p +
+      geom_line(aes(group = game_id), alpha = 0.05, color="gray")
+  }
+
+ # p <- p +
+  #  geom_point(alpha = 0.05)
+
+  if (grouping == "dataset_id") {
+    p <- p +
+      geom_smooth(aes(group = if (stage_one_only) 1 else stage_num, weight = trials),
+        method = "lm", formula = y ~ log(x),
+        se = TRUE,
+        col = "black",
+        lty = "dashed", linewidth = 1.5
+      )
+  } else {
+    p <- p +
+      geom_smooth(
+        aes(
+          col = as.factor(.data[[grouping]]),
+          group = if (stage_one_only) {
+            as.factor(.data[[grouping]])
+          } else {
+            interaction(stage_num, as.factor(.data[[grouping]]))
+          },
+          weight = trials,
+        ),
+        method = "lm", formula = y ~ log(x),
+        se = FALSE,
+        lty = "dashed", linewidth = 1.5
+      )
+  }
+
+  p <- p +
+    scale_x_continuous(breaks = if (max(df$rep_num, na.rm = TRUE) > 6) seq(0, 12, 2) else 1:6) +
+    labs(
+      title = title, x = "Repetition", y = y_lab,
+      col = names(groupings)[groupings == grouping]
+    )
+
+  if (grouping == "group_size") {
+    p <- p + GRP_SIZE_COL_SCALE
+  } else if (grouping == "information_availability_composite") {
+    p <- p + STRUCT_COL_SCALE
+  } else if (grouping == "option_size") {
+    p <- p + OPT_SIZE_COL_SCALE
+  }
+
+  if (faceting != "dataset_id") {
+    p <- p +
+      facet_grid(~ as.factor(.data[[faceting]])) +
+      theme(legend.position = if (grouping == "dataset_id") "none" else "bottom")
+  } else {
+    p <- p +
+      theme(
+        legend.position = if (grouping == "dataset_id") "none" else "inside",
+        legend.position.inside = legend_pos
+      )
+  }
+
+  p
+}
+```
+
+
+```{r}
+ make_line_plot(
+      df |> filter(rep_num<7, group_size>1) |> mutate(modality=str_c("Modality: ", modality)), "words",
+    "group_size", "modality", T, F,
+      "Reduction: Total describer utterance length across repetitions",
+      "Length (words)", c(0.85, 0.75)
+    ) +  guides(color=guide_legend(nrow=1))+
+      coord_cartesian(ylim = c(0, 50))+theme(title=element_blank(), 
+                                             strip.text=element_text(size=14),
+                                             legend.title=element_text(size=14),
+                                             legend.text=element_text(size=14),
+                                             axis.text=element_text(size=14),
+                                             axis.title=element_text(size=14),
+                                             legend.position = "bottom",
+                                             legend.margin=margin(c(-1,-1,-1,-1))
+                                            )
+
+ggsave("reduction.png", width=6, height=3)
+  
+```
+
+
+# Semantics plot
+
+```{r}
+make_line_plot(
+      df |> filter(rep_num<7) |> mutate(role_constancy=ifelse(role_constancy=="yes", "Constant describer", "Rotating describer")), "to_next",
+      "option_size", "role_constancy", T, F,
+      "Convergence: Similarity to previous round utterance within game",
+      "Cosine similarity", c(0.85, 0.25))+
+  coord_cartesian(xlim=c(2,6))+
+        theme(title=element_blank(), 
+                                             strip.text=element_text(size=16),
+                                             legend.title=element_text(size=16),
+                                             legend.text=element_text(size=16),
+                                             axis.text=element_text(size=16),
+                                             axis.title=element_text(size=16),
+                                             legend.position = "bottom")
+
+ggsave("similarity.png", width=6, height=4)
+    
+```
+
+# (stretch) PoS plot
+
+```{r}
+messages <- get_messages(include_condition_data = T)
+
+messages |> filter(confederates=="no", (is.na(message_irrelevant)|!message_irrelevant), language=="English",role=="describer") |> 
+  group_by(trial_id) |> summarize(text=str_c(text, sep=" ", collapse=" ")) |> write_csv("for_pos_tag.csv")
+
+meta_data <- messages |> filter(confederates=="no", (is.na(message_irrelevant)|!message_irrelevant), language=="English",role=="describer") |> 
+  select(-text, -role, -player_id, -message_number, -message_irrelevant, -message_id, -time_stamp) |> distinct()
+```
+
+
+```{r}
+
+pos <- read_csv("pos_tag.csv") |> left_join(meta_data) 
+
+pos |> distinct(dataset_id)
+```
+
+
+
+```{r}
+for_plot <- pos |> group_by(game_id, group_size, stage_num, dataset_id, condition_label, modality, option_size, rep_num) |> # update this set
+  summarize(across(c(nouns, modifiers, verbs, pro, closed), sum),
+            trials=n()) |> 
+  mutate(total=nouns+modifiers+verbs+pro+closed,
+         across(c(nouns, verbs, modifiers, pro, closed),\(c){c/total})) |> 
+  select(-total) |> pivot_longer(nouns:closed, values_to = "count", names_to="type") |> 
+  mutate(type=case_when(
+    type=="closed"~"Other closed class",
+    type=="modifiers"~"Modifiers",
+    type=="nouns"~"Nouns",
+    type=="pro"~"Pronouns",
+    type=="verbs"~"Verbs"
+  ) |> factor(levels=c("Nouns", "Verbs", "Modifiers", "Pronouns", "Other closed class")))
+```
+
+
+```{r}
+make_line_plot(
+      for_plot |> filter(rep_num<7), "count",
+      "modality", "dataset_id", F, T,
+      "TODO title",
+      "Fraction words", c(0.85, 0.25))+
+  facet_wrap(~type)+stat_summary(aes(group=interaction(dataset_id), weight=trials), geom="line", alpha=.3)+
+        theme(title=element_blank(), 
+                                             strip.text=element_text(size=14),
+                                             legend.title=element_text(size=16),
+                                             legend.text=element_text(size=14),
+                                             axis.text=element_text(size=16),
+                                             axis.title=element_text(size=16),
+                                             legend.position = "inside")
+
+ggsave("pos.png", height=4, width=6)
+
+```
+
+

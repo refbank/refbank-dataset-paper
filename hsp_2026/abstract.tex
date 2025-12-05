@@ -1,0 +1,223 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{helvet}
+\pagestyle{empty}
+%\usepackage[kerning=true]{microtype}
+\usepackage{parskip}
+\usepackage{sansmath}
+\usepackage[font={small, bf}]{caption}
+\usepackage[font={small}]{subcaption}
+\usepackage{graphicx}
+\usepackage{multicol}
+\setlength{\abovecaptionskip}{0pt}
+\setlength{\floatsep}{10pt}
+\setlength{\textfloatsep}{0pt}
+\setlength{\intextsep}{0pt}
+\setlength{\belowcaptionskip}{0pt}
+\setlength{\parindent}{3ex}
+\setlength{\parskip}{0pt}
+% Feel free to use additional packages for glosses, figures, whatnot.
+
+% The next bit is for reserving sufficient space for authors,
+% affiliations, and e-mail address.  No need to change for initial
+% anonymous version.  For the final version, replace the
+% \toggletrue{anonymous} with \togglefalse{anonymous} to de-anonymize.
+\usepackage{etoolbox}
+\newtoggle{anonymous}
+\togglefalse{anonymous}
+\usepackage{ulem}
+\renewcommand{\title}[1]{\textbf{#1}\\}
+\newcommand{\authors}[1]{\iftoggle{anonymous}{\phantom{#1}}{#1}\\}
+\newcommand{\email}[1]{\iftoggle{anonymous}{\phantom{#1}}{#1}}
+
+\begin{document}
+
+
+\noindent\title{Refbank: an open repository of iterated reference games}
+\authors{Veronica Boyce\textsuperscript{1,2}, Alvin W. M. Tan\textsuperscript{1}, Jess Mankewitz\textsuperscript{1,3}, Fiona Feng\textsuperscript{4}, Ryder Fried\textsuperscript{1}, Ben Prystawski\textsuperscript{1}, ...  Michael C. Frank\textsuperscript{1}, Robert D. Hawkins\textsuperscript{1}} \textsuperscript{1} Stanford, \textsuperscript{2} MIT, \textsuperscript{3} UW Madison, \textsuperscript{4} Queen's University
+\smallskip
+
+\noindent Iterated reference games (IRGs) are a commonly used paradigm for studying adaptive language use [citations?]. A reference game consist of a set of people communicating with each other about a set of potential referents. One person, the \textit{describer}, has a specific designated target that they seek to communicate to the \textit{matcher(s)}. 
+\textit{Iterated} reference games involve repeated reference to the same targets within the same group of people, so that the conversational history shapes the construction and understanding of later utterances (Fig 1). 
+
+
+
+IRGs are used to study a variety of related topics,  and each paper investigates a fraction of the analyses that could be of interest. The underlying language data (and associated selection history and metadata) is a high value corpus for studying not only convention formation, but also audience design, metaphor, semantic and syntactic alignment, reference expressions, and as  a benchmark for NLP models of pragmatics.  \textbf{To enable this reuse, we present Refbank,  an open repository of iterated reference games.}
+
+\smallskip
+
+\noindent \textbf{Refbank:}  Refbank stores data from IRGs in a relational database, including the utterances from each trial, as well as the target, matcher's selections, and metadata about experimental conditions, the images, and participant demographics. A data processing pipeline creates derived measures including semantic embeddings of utterances and similarity metrics across utterances(using S-BERT, cite). Refbank data is versioned and can be accessed on the Redivis website, via the Redivis API, and via a custom R package \texttt{refbankr}. The data can also be explored via a shiny app at \url{refbank.github.io/data.html}. %TODO fix if we change the URL.
+
+
+Refbank currently has language data from 12 datasets, including 1.3 million words from 126K referential trials from 2390 games and 4770 participants (Table 1). 7 datasets had online experiments where participants typed written messages, and 5 datasets had in-person experiments where participants spoke face-to-face, including 1 dataset in Dutch. Studies varied in participant population, group size or partner switching structure, type and number of targets, and type of backchannel. We are currently adding 6 more datasets of in-person spoken interaction (4 English, 1 Swiss German, 1 French), comprising 10,000 trials (150 games).
+
+\smallskip
+
+\noindent \textbf{Analyses:} A goal of Refbank is to enable the study of moderators and generalizations of phenomena observed in IRGs. Just using the shiny app, we can confirm the canonical finding that the length of describer utterances decreases over repetitions, and explore how this is moderated by both group-size and the modality of communication(Fig 2). Recent papers have noted that descriptions from adjacent repetitions become more similar over time as conventions develop (Hawkins et al. 2019, Boyce et al 2024). Refbank enables us to confirm if this holds more generally, revealing that the convergence is stronger when the describer is constant across repetitions, and also varies based on the number of image options each trial (Fig 3). 
+
+Hawkins et al (2019) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed class words. Using Refbank, we can repeat this analysis across a larger dataset (Fig 3). We found that this trade-off between nouns and closed-class words seems limited to the online written paradigm, and that in spoken paradigms, the trade-off is between nouns and open-class verbs. This illustrates how combining datasets allows for novel discoveries.  
+
+\smallskip
+
+\noindent\textbf{Uses:} Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that could be more broadly of use for corpus linguistics and for assessing language model's pragmatics. With straightforward interfaces, Refbank could also be a resource for teaching and class projects in classes. 
+
+We are seeking more datasets (including unpublished) to grow Refbank, so please contact us if you have an IRG dataset you wish to contribute!
+
+
+\newpage
+
+\begin{center}\textbf{}\end{center}
+%\begin{minipage}{.4\textwidth}
+%	\captionof{figure}{Original game}
+%	{	\includegraphics[width=\textwidth]{orig_diagram.png}} 
+%	
+%	\begin{small}
+%	In [articipants played a reference game in real time with other participants using a chat box.
+%	
+%\end{small}
+%	
+%\end{minipage}
+%~~~
+%\begin{minipage}{.55\textwidth}
+%	\captionof{figure}{Current experiment}
+%	{	\includegraphics[width=\textwidth]{matcher_diagram.png}} 
+%	\begin{small}
+%		In the current experiment, we sampled the game transcripts from 10 games from Boyce et al. 2024\textsuperscript{1}. We recruited new participants to each see the transcripts from one game, either with the trials in the same order (yoked) or a random order (shuffled).  New participants revealed the dialogue from a trial word-by-word and then selected what image they think was being described. 
+%		
+%	\end{small}	
+%\end{minipage}
+
+\begin{small}
+\begin{minipage}{\textwidth}
+	\captionof{table}{Included datasets}
+	Refbank currently has language data from 12 datasets. Unless noted, each game had two adult players.
+	
+	\begin{footnotesize}
+	\centering
+	\begin{tabular}{rrrrll}
+
+		 Paper & \#Games & \#Trials & \#Words & Modality & Notes \\ 
+		\hline
+		 Bögels et al (2026) &  47 & 4 512 & 176 483 & in-person & Dutch \\ 
+		 		Yoon \& Brown-Schmidt (2019) & 788 & 41 766 & 348 849 & in-person & partner swaps in groups of 4-7 \\ 
+		 Leung et al. (2024) &  82  & 3 259 & 37 360 & in-person& parent-child \\ 
+		  Boyce et al. (2025)  &  97  & 1 438 & 16 887 & in-person & children\\ 
+		 Branigan et al. (2016)  &  24  & 764 & 30 430 & in-person & children, with partner swaps \\ 
+		 Boyce et al. (2024) & 306  & 21 269 & 374 105 & online & groups of 2-6 \\ 
+		
+		 Eliav et al (2023)  & 262  & 8 183 & 50 468 & online& \\ 
+		 Hawkins et al (2019)  & 168  & 3 994 & 19 740 & online &\\ 
+		 Hawkins et al. (2020) & 100  & 7 120 & 62 590 & online &\\ 
+		 		 Mankewitz \& Hawkins (2025)  & 447 & 28 244 & 198 713 & online& \\ 
+		 Hawkins et al (2021)  &  43  & 3 699 & 25 777 & online&  groups of 4 in changing pairs\\ 
+		 Hawkins et al (2023) &  26  & 2 278 & 11 756 & online & groups of 4 in changing pairs\\ 
+		 
+
+
+		\hline
+		Total & 2 390 & 126 526 & 1 353 158	 && \\
+		\hline
+	\end{tabular}
+\end{footnotesize}
+	\end{minipage}
+
+
+
+\bigskip
+
+%possibly include diagram of canonical reference game? 
+
+%possibly include how to access dataset?
+	
+
+
+
+\begin{minipage}{.38\textwidth}
+
+
+	\begin{small}
+		\centering
+		\includegraphics[width=\textwidth]{diagram.png}
+		
+			\captionof{figure}{Schematic of IRG} Pink highlights show a target described in each repetition of an IRG.
+	\end{small}
+	
+\end{minipage}
+~~~~
+\begin{minipage}{.58\textwidth}
+
+
+	\begin{small}
+\centering
+\includegraphics[width=\textwidth]{reduction.png}
+		
+\captionof{figure}{Reduction} Length of describer utterances across repetitions. Dashed lines are log best fit, faint lines are per game. 
+	\end{small}
+	
+\end{minipage}
+
+\bigskip
+
+
+
+
+
+
+
+\begin{minipage}{.48\textwidth}
+	
+
+
+	\begin{small}
+			\centering
+		\includegraphics[width=\textwidth]{similarity.png}
+	\captionof{figure}{Convergence} Similarity description and previous repetition's description of same target within games. Dashed lines are log best fit, faint lines are per game. 
+	\end{small}
+	
+\end{minipage}
+~~~~
+\begin{minipage}{.48\textwidth}
+	
+
+
+
+	%	could consider rejiggering to better match categories in Hawkins et al ?
+
+	\begin{small}
+			\centering
+		\includegraphics[width=\textwidth]{pos.png}
+		
+			\captionof{figure}{Parts of Speech}  Fraction of words of describer utterances belonging to each category across repetitions. Dashed lines are aggregates, thin lines are per dataset. 
+	\end{small}
+	
+\end{minipage}
+
+\bigskip
+\begin{minipage}{\textwidth}
+	\vspace{5pt}
+	\begin{scriptsize} \textbf{Included datasets:}
+		Bögels, S., Li, T., et al. (2026). Cognition. \url{doi.org/10.1016/j.cognition.2025.106370} $\bullet$ 
+Boyce, V., Hawkins, R. D., Goodman, N. D., \& Frank, M. C. (2024). PNAS. \url{doi.org/10.1073/pnas.2403888121}$\bullet$
+ Boyce, V., Sparks, R., Mofor, Y., \& Frank, M. C. (2025). Cogsci Proceedings. \url{escholarship.org/uc/item/047820tn} $\bullet$
+  Branigan, H. P., Bell, J., \& McLean, J. F. (2016). Frontiers in psychology. \url{doi.org/10.3389/fpsyg.2016.00213} $\bullet$
+  Eliav, R., Ji, A., Artzi, Y., \& Hawkins, R. D. (2023). \url{doi.org/10.48550/arXiv.2305.06539} $\bullet$
+   Hawkins, R. D., Kwon, M., Sadigh, D., \& Goodman, N. D. (2019). CoNLL. \url{doi.org/10.18653/v1/2020.conll-1.33} $\bullet$
+   Hawkins, R. D., Frank, M. C., \& Goodman, N. D. (2020). Cognitive Science. \url{doi.org/10.1111/cogs.12845} $\bullet$ 
+    Hawkins, R., Liu, I., Goldberg, A., \& Griffiths, T. (2021). Cogsci Proceedings. \url{escholarship.org/uc/item/6xz612cb} $\bullet$
+		Hawkins, R. D., Franke, M., et al. (2023). Psychological Review. \url{doi.org/10.1037/rev0000348} $\bullet$
+		 Leung, A., Yurovsky, D., \& Hawkins, R. D. (2025). Child Development. \url{doi.org/10.1111/cdev.14186} $\bullet$
+		 Mankewitz, J., \& Hawkins, R. (2025). Cogsci Proceedings. \url{escholarship.org/uc/item/4tw1c3gn} $\bullet$ 
+ Yoon, S. O., \& Brown-Schmidt, S. (2019). Cognitive science. \url{doi.org/10.1111/cogs.12774} 
+	
+\textbf{Other references:}
+TODO
+
+\end{scriptsize}
+\end{minipage}
+
+\end{small}
+\end{document}
