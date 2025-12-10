@@ -215,8 +215,8 @@ make_line_plot <- function(df, y, grouping, faceting, indiv_lines, stage_one_onl
 
 ```{r}
  make_line_plot(
-      df |> filter(rep_num<7, group_size>1) |> mutate(modality=str_c("Modality: ", modality)), "words",
-    "group_size", "modality", T, F,
+      df |> filter(rep_num<7, group_size>1, stage_num==1) |> mutate(modality=str_c("Modality: ", modality)), "words",
+    "group_size", "modality", T, T,
       "Reduction: Total describer utterance length across repetitions",
       "Length (words)", c(0.85, 0.75)
     ) +  guides(color=guide_legend(nrow=1))+
@@ -239,8 +239,8 @@ ggsave("reduction.png", width=6, height=3)
 
 ```{r}
 make_line_plot(
-      df |> filter(rep_num<7) |> mutate(role_constancy=ifelse(role_constancy=="yes", "Constant describer", "Rotating describer")), "to_next",
-      "option_size", "role_constancy", T, F,
+      df |> filter(rep_num<7, stage_num==1) |> mutate(role_constancy=ifelse(role_constancy=="yes", "Constant describer", "Rotating describer")), "to_next",
+      "option_size", "role_constancy", T, T,
       "Convergence: Similarity to previous round utterance within game",
       "Cosine similarity", c(0.85, 0.25))+
   coord_cartesian(xlim=c(2,6))+
@@ -296,8 +296,46 @@ for_plot <- pos |> group_by(game_id, group_size, stage_num, dataset_id, conditio
 
 
 ```{r}
+library(ggthemes)
 make_line_plot(
       for_plot |> filter(rep_num<7), "count",
+      "modality", "dataset_id", F, T,
+      "TODO title",
+      "Fraction words", c(0.85, 0.25))+
+  facet_wrap(~type)+stat_summary(aes(group=interaction(dataset_id), weight=trials), geom="line", alpha=.3)+
+  scale_color_solarized()+
+        theme(title=element_blank(), 
+                                             strip.text=element_text(size=14),
+                                             legend.title=element_text(size=16),
+                                             legend.text=element_text(size=14),
+                                             axis.text=element_text(size=16),
+                                             axis.title=element_text(size=16),
+                                             legend.position = "inside")
+
+ggsave("pos.png", height=4, width=6)
+
+```
+
+```{r}
+
+for_plot_2 <- pos |> group_by(game_id, group_size, stage_num, dataset_id, condition_label, modality, option_size, rep_num) |> # update this set
+  summarize(across(c(nouns, modifiers, verbs, pro, closed), sum),
+            trials=n()) |> 
+  mutate(total=nouns+modifiers+verbs+pro+closed,
+         across(c(nouns, verbs, modifiers, pro, closed),\(c){c/nouns})) |> 
+  select(-total) |> pivot_longer(nouns:closed, values_to = "count", names_to="type") |> 
+  mutate(type=case_when(
+    type=="closed"~"Other closed class",
+    type=="modifiers"~"Modifiers",
+    type=="nouns"~"Nouns",
+    type=="pro"~"Pronouns",
+    type=="verbs"~"Verbs"
+  ) |> factor(levels=c("Nouns", "Verbs", "Modifiers", "Pronouns", "Other closed class")))
+```
+
+```{r}
+make_line_plot(
+      for_plot_2 |> filter(rep_num<7), "count",
       "modality", "dataset_id", F, T,
       "TODO title",
       "Fraction words", c(0.85, 0.25))+
@@ -309,9 +347,6 @@ make_line_plot(
                                              axis.text=element_text(size=16),
                                              axis.title=element_text(size=16),
                                              legend.position = "inside")
-
-ggsave("pos.png", height=4, width=6)
-
 ```
 
 
