@@ -28,7 +28,7 @@
 % \toggletrue{anonymous} with \togglefalse{anonymous} to de-anonymize.
 \usepackage{etoolbox}
 \newtoggle{anonymous}
-\togglefalse{anonymous}
+\toggletrue{anonymous}
 \usepackage{ulem}
 \renewcommand{\title}[1]{\textbf{#1}\\}
 \newcommand{\authors}[1]{\iftoggle{anonymous}{\phantom{#1}}{#1}\\}
@@ -38,24 +38,26 @@
 
 
 \noindent\title{Refbank: an open repository of iterated reference games}
-\authors{Veronica Boyce\textsuperscript{1,2}, Alvin W. M. Tan\textsuperscript{1}, Jess Mankewitz\textsuperscript{1,3}, Fiona Feng\textsuperscript{4}, Benji Fernandez\textsuperscript{1}, Ryder Fried\textsuperscript{1},  Ben Prystawski\textsuperscript{1}, Michael C. Frank\textsuperscript{1}, Robert D. Hawkins\textsuperscript{1}} \textsuperscript{1} Stanford, \textsuperscript{2} MIT, \textsuperscript{3} UW Madison, \textsuperscript{4} Queen's University %TODO update
-\smallskip
+\authors{Veronica Boyce\textsuperscript{1,2}, Alvin W. M. Tan\textsuperscript{1}, Jess Mankewitz\textsuperscript{1,3}, Fiona Feng\textsuperscript{4}, Benji Fernandez\textsuperscript{1}, Ryder Fried\textsuperscript{1},  Ben Prystawski\textsuperscript{1}, Michael C. Frank\textsuperscript{1}, Robert D. Hawkins\textsuperscript{1} \\ \textsuperscript{1} Stanford, \textsuperscript{2} MIT, \textsuperscript{3} UW Madison, \textsuperscript{4} Queen's University} %TODO update
 
 Iterated reference games (IRGs) are a commonly used paradigm for studying adaptive language use, where people communicate about a set of potential referents. On each trial, one person, the \textit{describer}, has a specific designated target that they seek to communicate to the \textit{matcher(s)}. Across trials, targets are repeated so that the conversational history shapes the construction and understanding of later utterances (Fig 1). 
 
-IRGs are widely used to study convention formation, with each experiment manipulating a small set of possible experimental design variables% . Despite the rich data yielded by IRGs,  each experiment only 
+IRGs are widely used to study convention formation, with each experiment manipulating a small set of possible experimental design variables % . Despite the rich data yielded by IRGs,  each experiment only 
 and investigating a fraction of the possible analyses. Nevertheless, the underlying language data (and associated metadata) from IRGs constitute a high value corpus for studying not only convention formation, but also audience design, metaphor, semantic and syntactic alignment, and referring expressions; they can also be used as a benchmark for NLP models of pragmatics. \textbf{To enable this reuse, we present Refbank, an open repository of iterated reference game data.}
 
-\noindent \textbf{Refbank:}  Refbank stores data from IRGs in a relational schema, including the utterances, matcher's selections, and metadata about experimental conditions, the images, and participant demographics. A data processing pipeline creates derived measures, including semantic embeddings of utterances and similarity metrics across utterances (using S-BERT, Reimers and Gurevych, 2019).
- Refbank data is versioned and can be accessed through \url{refbank.github.com} or via a custom R package \texttt{refbankr}. The data can also be explored via interactive visualizations. 
-Refbank currently has data from 12 datasets (11 English, 1 Dutch), including 1.3 million words from 126K referential trials from 2390 games and 4770 participants (Table 1). 7 datasets were online experiments where participants typed written messages, and 5 datasets were in-person experiments where participants spoke face-to-face. Studies varied in participant population, group size or partner switching structure, type and number of targets, and type of backchannel. We are currently adding 6 more datasets with spoken interaction (4 English, 1 Swiss German, 1 French), comprising 10,000 trials (150 games).
+\smallskip
+ \textbf{Refbank:}  Refbank stores data from IRGs in a relational schema, including the utterances, matcher's selections, and metadata about experimental conditions, the images, and participant demographics. A data processing pipeline creates derived measures, including semantic embeddings of utterances and similarity metrics across utterances (using S-BERT, Reimers and Gurevych, 2019).
+ Refbank data is versioned and can be accessed through \url{refbank.github.io} or via a custom R package \texttt{refbankr}. The data can also be explored via interactive visualizations. 
+Refbank currently has data from 12 datasets (11 English, 1 Dutch), including 1.3 million words from 126K referential trials from 2390 games and 4770 participants (Table 1). 7~datasets were online experiments where participants typed written messages, and 5 datasets were in-person experiments where participants spoke face-to-face. Studies varied in participant population, group size or partner switching structure, type and number of targets, and type of backchannel permitted. We are currently adding 6 more datasets with spoken interaction (4 English, 1 Swiss German, 1 French), comprising 10,000 trials (150 games).
 
-\noindent \textbf{Analyses:} One goal of Refbank is to enable the study of moderators and generalizations of phenomena observed in IRGs. We provide three examples of how Refbank can replicate and extend prior findings. 
+\smallskip
+ \textbf{Analyses:} One goal of Refbank is to enable the study of moderators and generalizations of phenomena observed in IRGs. We provide three examples of how Refbank can replicate and extend prior findings. 
 First, the canonical finding that the length of describer utterances decreases over repetitions replicates in Refbank, and Refbank allows exploration of how this trend is moderated by both group size and the modality of communication (Fig 2). 
 Second, Hawkins et al. (2020) and Boyce et al. (2024)  found that descriptions from adjacent repetitions become more similar in later repetitions. Refbank confirms that this observation holds across datasets and reveals that the convergence is stronger when the describer is constant across repetitions (Fig 3). 
-Third, Hawkins et al (2020) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed class words. In Refbank, this trade-off between nouns and closed-class words only occurs for datasets in the online written paradigm; in spoken experiments, nouns increase, but at the expense of verbs. We speculate that the ease of producing closed-class words may be modality-dependent, where it's easier to type telegraphic messages and easier to speak fluent descriptions with (phonologically reduced) closed-class items. This analysis illustrates how combining datasets allows for novel discoveries that can spur future research.
+Third, Hawkins et al. (2020) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. In Refbank, this trade-off between nouns and closed-class words only occurs for datasets in the online written paradigm; in spoken experiments, nouns increase, but at the expense of verbs. We speculate that the ease of producing closed-class words may be modality-dependent, where it's easier to type telegraphic messages and easier to speak fluent descriptions with (phonologically reduced) closed-class items. This analysis illustrates how combining datasets allows for novel discoveries that can spur future research.
 
-\noindent \textbf{Future uses:} Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
+\smallskip
+ \textbf{Future uses:} Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
 \textit{We are seeking more datasets (including unpublished) to grow Refbank, so please contact us if you have an IRG dataset to contribute!}
 
 
@@ -148,7 +150,7 @@ Third, Hawkins et al (2020) found that the distribution of parts of speech in de
 	\begin{small}
 			\centering
 		\includegraphics[width=\textwidth]{similarity.png}
-	\captionof{figure}{Convergence} Similarity description and previous repetition's description of same target within games. Dashed lines are log best fit, faint lines are per game. 
+	\captionof{figure}{Convergence} Similarity of description and previous repetition's description of same target within games. Dashed lines are log best fit, faint lines are per game. 
 	\end{small}
 	
 \end{minipage}
@@ -176,7 +178,7 @@ Third, Hawkins et al (2020) found that the distribution of parts of speech in de
 		Bögels, S., Li, T., et al. (2026). Cognition. \url{doi.org/10.1016/j.cognition.2025.106370} $\bullet$ 
 Boyce, V., Hawkins, R. D., Goodman, N. D., \& Frank, M. C. (2024). PNAS. \url{doi.org/10.1073/pnas.2403888121}$\bullet$
  Boyce, V., Sparks, R., Mofor, Y., \& Frank, M. C. (2025). Cogsci Proceedings. \url{escholarship.org/uc/item/047820tn} $\bullet$
-  Branigan, H. P., Bell, J., \& McLean, J. F. (2016). Frontiers in psychology. \url{doi.org/10.3389/fpsyg.2016.00213} $\bullet$
+  Branigan, H. P., Bell, J., \& McLean, J. F. (2016). Frontiers in Psychology. \url{doi.org/10.3389/fpsyg.2016.00213} $\bullet$
   Eliav, R., Ji, A., Artzi, Y., \& Hawkins, R. D. (2023). \url{doi.org/10.48550/arXiv.2305.06539} $\bullet$
    Hawkins, R. D., Kwon, M., Sadigh, D., \& Goodman, N. D. (2019). CoNLL. \url{doi.org/10.18653/v1/2020.conll-1.33} $\bullet$
    Hawkins, R. D., Frank, M. C., \& Goodman, N. D. (2020). Cognitive Science. \url{doi.org/10.1111/cogs.12845} $\bullet$ 
@@ -184,7 +186,7 @@ Boyce, V., Hawkins, R. D., Goodman, N. D., \& Frank, M. C. (2024). PNAS. \url{do
 		Hawkins, R. D., Franke, M., et al. (2023). Psychological Review. \url{doi.org/10.1037/rev0000348} $\bullet$
 		 Leung, A., Yurovsky, D., \& Hawkins, R. D. (2025). Child Development. \url{doi.org/10.1111/cdev.14186} $\bullet$
 		 Mankewitz, J., \& Hawkins, R. (2025). Cogsci Proceedings. \url{escholarship.org/uc/item/4tw1c3gn} $\bullet$ 
- Yoon, S. O., \& Brown-Schmidt, S. (2019). Cognitive science. \url{doi.org/10.1111/cogs.12774} 
+ Yoon, S. O., \& Brown-Schmidt, S. (2019). Cognitive Science. \url{doi.org/10.1111/cogs.12774} 
 	
 \textbf{Other references:} Reimers, N. and Gurevych, I. (2019). EMNLP \url{arxiv.org/abs/1908.10084}
 
