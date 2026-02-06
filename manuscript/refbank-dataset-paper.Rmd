@@ -1,0 +1,219 @@
+---
+title             : |
+  | Refbank the dataset the paper
+shorttitle: Refbank
+author: 
+  - name          : "Veronica Boyce"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    email         : "vboyce@stanford.edu"
+  - name          : "Alvin W. M. Tan"
+    affiliation   : "1"
+  - name          : "MORE AUTHORS GO HERE"
+    affiliation   : "1"
+  - name          : "Michael C. Frank"
+    affiliation   : "1"
+    
+
+affiliation:
+  - id            : "1"
+    institution   : "Stanford University"
+  - id            : "1"
+    institution   : "Massachusetts Institute of Technology"
+
+authornote: |
+  TODO
+
+abstract: |
+  REFBANK TODO
+  
+
+keywords          : TODO
+wordcount         : TODO
+
+bibliography      : RefBank.bib
+
+floatsintext      : yes
+linenumbers       : yes
+draft             : no
+mask              : no
+
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+
+classoption       : "man"
+csl               : apa7.csl
+output            : papaja::apa6_pdf
+header-includes   :
+  - \usepackage{setspace}\singlespacing
+  - \setlength{\parskip}{0pt}
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+
+knitr::opts_chunk$set(
+  fig.width = 3, fig.height = 3, fig.crop = F,
+  fig.pos = "tb", fig.path = "figs/",
+  echo = F, warning = F, cache = F,
+  message = F, sanitize = T
+)
+
+library(png)
+library(grid)
+library(ggplot2)
+library(xtable)
+library(tidyverse)
+library(here)
+library(brms)
+library(rstan)
+library(rstanarm)
+library(ggthemes)
+library(kableExtra)
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+theme_set(theme_bw())
+
+### functions for printing things nicely!
+stats <- function(model, row, decimal = 2) {
+  model <- model |>
+    mutate(
+      Estimate = round(Estimate, digits = decimal),
+      Lower = round(lower, digits = decimal),
+      Upper = round(upper, digits = decimal),
+      `Credible Interval` = str_c("[", Lower, ", ", Upper, "]")
+    ) |>
+    select(Term, Estimate, `Credible Interval`)
+  str_c(model[row, 1], ": ", model[row, 2], " ", model[row, 3])
+}
+
+stats_text <- function(model, row, decimal = 2) {
+  model <- model |>
+    mutate(
+      Estimate = round(Estimate, digits = decimal) |> formatC(format='f', digits=decimal ),
+      Lower = round(lower, digits = decimal) |> formatC(format='f', digits=decimal ),
+      Upper = round(upper, digits = decimal) |> formatC(format='f', digits=decimal ),
+      `Credible Interval` = str_c("[", Lower, ", ", Upper, "]")
+    ) |>
+    select(Term, Estimate, `Credible Interval`)
+  str_c(model[row, 2], "  ", model[row, 3])
+}
+
+form <- function(model_form) {
+  dep <- as.character(model_form$formula[2])
+  ind <- as.character(model_form$formula[3])
+  
+  str_c(dep, " ~ ", ind) |>
+    str_replace_all(" ", "") |>
+    str_replace_all("\\*", " $\\\\times$ ") |>
+    str_replace_all("\\+", "&nbsp;+ ") |>
+    str_replace_all("~", "$\\\\sim$ ")
+}
+```
+
+
+
+# Intro
+
+## What are ref games?
+
+## What are ref games used for / what have people found
+
+## Why aggregate? 
+note: discuss both the other similar aggregation schemes have been helpful within the given topic -- childes, wordbank, peekbank, etc
+
+makes data reuse easier -- make some things possible that otherwise wouldn't have been 
+
+and that the aggregation makes it more helpful for further fields -- an important first step for CS/AI benchmarking/applications or for task corpora in linguistics
+
+## Here we ...
+
+# "Methods"
+* TODO see also how other papers do this like peekbank dataset paper etc 
+
+## Data description 
+(format and processing)
+
+## Schema
+
+### Processing 
+dataset normalization / transcription / target coding / etc (where are the places where we had to make guesses)
+
+In here could discuss that this makes it not human subjects data b/c it doesn't have identifiers 
+
+criteria for inclusion / choices to record exclusions but not apply them 
+
+### Metadata coding 
+
+
+### Derivative measures 
+things like word count, sbert, pos, other stuff 
+discuss that for processing measures that include comparison across trials, need our own light exclusions 
+
+## Current datasets
+(+ how solicitation happened)
+this is where a table of included datasets & vague properties could be helpful!
+
+## Using refbank
+how to access etc 
+Shiny app / API / redivis versioning etc 
+
+# Analyses
+
+(basically the tabs and graphs we have for shiny)
+
+## The boring stuff: accuracy and reduction
+
+acc ~ rep_num + (rep_num | paper / condition)
+log rt ~ rep_num + (rep_num | paper / condition)
+
+## Reduction
+
+### Main effect of rep num 
+(on stage 1 only)
+log words ~ (log?) rep_num + (rep_num | paper / condition)
+try the different functional form options & report best fit b/c this is relevant (see also power-law claiming paper)
+
+
+### Moderation by participant structure
+n-players, age-group (on stage 1 only, using n-players who are active at this point)
+
+### Moderation by expt design / communication channel
+thickness, modality (can maybe break up feedback / backchannel / role rotation?)
+
+### Stim sets
+type of stims x n targets 
+
+### Stage num 
+How do switches (like in partners) play out?
+--> switching partners leads to zig-zags
+
+## PoS
+I think we should use modality as a moderator here? 
+
+hedges / PoS /...
+
+## SBERT
+
+all of our favorite convergence / divergence measures 
+(w/o moderators??)
+
+# Discussion
+summary of what we did and results
+
+commentary on that this data can be shared once it's transcribed b/c its not human subjects data & that data reuse is one of our favorite things (so, y'know, give us more datasets!) (could crib from the peekbank behavioral methods paper for how they framed this!)
+
+Useful for exploration and for future directions for new data collection (ex. multi-lingual, or cleanly comparable modality or whatever we want to point towards)
+
+<!--# Acknowledgements
+
+Place acknowledgments (including funding information) in a section at
+the end of the paper.-->
+
+\newpage
+
+# References
+
+::: {#refs custom-style="Bibliography"}
+:::
