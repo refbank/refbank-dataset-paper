@@ -50,7 +50,7 @@ for_table <- extant |> group_by(dataset_id, short_cite, full_cite, modality, par
     group_size=case_when(
       min_group_size==max_group_size ~ as.character(min_group_size),
       T ~ str_c(min_group_size, " - ", max_group_size)
-    )) |> 
+    )) 
   filter(words>0) |> 
   mutate(comments="")
 
