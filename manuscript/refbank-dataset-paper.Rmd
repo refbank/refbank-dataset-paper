@@ -161,12 +161,24 @@ Shiny app / API / redivis versioning etc
 
 # Analyses
 
+```{r}
+# source(here("code/get_data_for_mods.R"))
+```
+
+
 (basically the tabs and graphs we have for shiny)
+
+
+
 
 ## The boring stuff: accuracy and reduction
 
-acc ~ rep_num + (rep_num | paper / condition)
-log rt ~ rep_num + (rep_num | paper / condition)
+
+acc ~ rep_num + (rep_num | paper / condition) -- logistic
+
+log rt ~ rep_num + (rep_num | paper / condition) -- linear? or log log?
+
+
 
 ## Reduction
 
@@ -175,9 +187,16 @@ log rt ~ rep_num + (rep_num | paper / condition)
 log words ~ (log?) rep_num + (rep_num | paper / condition)
 try the different functional form options & report best fit b/c this is relevant (see also power-law claiming paper)
 
+* power law: log - log 
+* log-linear: log words ~ rep_num
+* linear-log: words ~ log(rep)
+* linear as baseline 
+
+
 
 ### Moderation by participant structure
 n-players, age-group (on stage 1 only, using n-players who are active at this point)
+
 
 ### Moderation by expt design / communication channel
 thickness, modality (can maybe break up feedback / backchannel / role rotation?)
@@ -185,19 +204,31 @@ thickness, modality (can maybe break up feedback / backchannel / role rotation?)
 ### Stim sets
 type of stims x n targets 
 
+
 ### Stage num 
 How do switches (like in partners) play out?
 --> switching partners leads to zig-zags
 
+
+
 ## PoS
 I think we should use modality as a moderator here? 
 
-hedges / PoS /...
+hedges 
+
+
+definites --discussion point how to group the different categories!
+
+
+pos --discussion point how to group the different categories!
+
 
 ## SBERT
 
 all of our favorite convergence / divergence measures 
 (w/o moderators??)
+
+
 
 # Discussion
 summary of what we did and results

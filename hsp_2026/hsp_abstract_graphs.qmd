@@ -50,11 +50,11 @@ for_table <- extant |> group_by(dataset_id, short_cite, full_cite, modality, par
     group_size=case_when(
       min_group_size==max_group_size ~ as.character(min_group_size),
       T ~ str_c(min_group_size, " - ", max_group_size)
-    )) 
+    )) |> 
   filter(words>0) |> 
   mutate(comments="")
 
-for_table |> select(-dataset_id, -full_cite)
+for_table |> ungroup() |> select(-dataset_id, -full_cite) |> View()
 
 for_table |> distinct(full_cite)  
 
@@ -234,6 +234,31 @@ ggsave("reduction.png", width=6, height=3)
   
 ```
 
+```{r}
+
+# for poster 
+
+ make_line_plot(
+      df |> filter(rep_num<7, group_size>1, stage_num==1) |>  filter(modality!="oral-remote") |> mutate(modality=str_c("Modality: ", modality)), "words",
+    "group_size", "modality", T, T,
+      "Reduction: Total describer utterance length across repetitions",
+      "Length (words)", c(0.85, 0.75)
+    ) + 
+      coord_cartesian(ylim = c(0, 50))+theme(title=element_blank(), 
+                                                                                          legend.position = "right",
+                                             strip.text=element_text(size=15),
+                                             legend.title=element_text(size=16),
+                                             legend.text=element_text(size=16),
+                                             axis.text=element_text(size=16),
+                                             axis.title=element_text(size=16),
+                                        
+                                             legend.margin=margin(-2,-2,-2,-2)
+                                            )+  guides(color=guide_legend(ncol=1))
+
+ggsave("reduction-poster.png", width=7, height=3)
+  
+```
+
 
 # Semantics plot
 
@@ -252,7 +277,28 @@ make_line_plot(
                                              axis.title=element_text(size=16),
                                              legend.position = "bottom")
 
-ggsave("similarity.png", width=6, height=4)
+ggsave("similarity.png", width=7, height=4)
+    
+```
+
+```{r}
+make_line_plot(
+      df |> filter(rep_num<7, stage_num==1) |> mutate(role_constancy=ifelse(role_constancy=="yes", "Constant describer", "Rotating describer")), "to_next",
+      "option_size", "role_constancy", T, T,
+      "Convergence: Similarity to previous round utterance within game",
+      "Cosine similarity", c(0.85, 0.25))+
+  coord_cartesian(xlim=c(2,6))+
+        theme(title=element_blank(), 
+                                             strip.text=element_text(size=16),
+                                             legend.title=element_text(size=16),
+                                             legend.text=element_text(size=16),
+                                             axis.text=element_text(size=16),
+                                             axis.title=element_text(size=16),
+                                             legend.position = "right",
+                                                           legend.margin=margin(-2,-2,-2,-2))+  guides(color=guide_legend(ncol=1))
+
+
+ggsave("similarity-poster.png", width=7, height=3)
     
 ```
 
@@ -298,7 +344,7 @@ for_plot <- pos |> group_by(game_id, group_size, stage_num, dataset_id, conditio
 ```{r}
 library(ggthemes)
 make_line_plot(
-      for_plot |> filter(rep_num<7), "count",
+      for_plot |> filter(rep_num<7) |> filter(modality!="oral-remote") |>, "count",
       "modality", "dataset_id", F, T,
       "TODO title",
       "Fraction words", c(0.85, 0.25))+
@@ -312,7 +358,28 @@ make_line_plot(
                                              axis.title=element_text(size=16),
                                              legend.position = "inside")
 
-ggsave("pos.png", height=4, width=6)
+ggsave("pos.png", height=3, width=7)
+
+```
+
+```{r}
+library(ggthemes)
+make_line_plot(
+      for_plot |> filter(rep_num<7) |> filter(modality!="oral-remote"), "count",
+      "modality", "dataset_id", F, T,
+      "TODO title",
+      "Fraction words", c(0.85, 0.25))+
+  facet_wrap(~type)+stat_summary(aes(group=interaction(dataset_id), weight=trials), geom="line", alpha=.3)+
+  scale_color_solarized()+
+        theme(title=element_blank(), 
+                                             strip.text=element_text(size=14),
+                                             legend.title=element_text(size=16),
+                                             legend.text=element_text(size=14),
+                                             axis.text=element_text(size=16),
+                                             axis.title=element_text(size=16),
+                                             legend.position = "inside")
+
+ggsave("pos-poster.png", height=3.5, width=7)
 
 ```
 
