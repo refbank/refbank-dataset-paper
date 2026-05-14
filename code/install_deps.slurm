@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=install_deps
-#SBATCH --partition=dev
+#SBATCH --partition=normal
 #SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=8G
