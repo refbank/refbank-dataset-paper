@@ -18,7 +18,7 @@ if (length(to_install) > 0) {
 library(cmdstanr)
 
 # Find existing CmdStan installation or install fresh
-default_dir <- cmdstan_default_install_dir()
+default_dir <- path.expand("~/.cmdstan")
 installed_versions <- list.files(default_dir, pattern = "^cmdstan-")
 
 if (length(installed_versions) > 0) {
