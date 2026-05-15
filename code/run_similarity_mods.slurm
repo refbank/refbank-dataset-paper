@@ -8,5 +8,6 @@
 #SBATCH --error=slurm_logs/similarity_mods_%j.err
 
 module load R/4.4.2
+export TBB_CXX_TYPE=gcc
 
 Rscript code/run_similarity_mods.R

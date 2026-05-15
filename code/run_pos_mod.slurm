@@ -8,5 +8,6 @@
 #SBATCH --error=slurm_logs/pos_mod_%j.err
 
 module load R/4.4.2
+export TBB_CXX_TYPE=gcc
 
 Rscript code/run_pos_mod.R
