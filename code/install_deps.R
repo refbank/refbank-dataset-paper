@@ -27,7 +27,7 @@ if (length(installed_versions) > 0) {
   message(paste("CmdStan path set to:", cmdstan_version()))
 } else {
   message("Installing CmdStan...")
-  install_cmdstan(cores = 4)
+  install_cmdstan(cores = 4, cpp_options = list(TBB_CXX_TYPE = "gcc"))
 }
 
 # Persist path in ~/.Rprofile so future sessions find CmdStan automatically
