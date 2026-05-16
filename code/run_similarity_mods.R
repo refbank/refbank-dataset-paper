@@ -3,6 +3,11 @@ library(here)
 library(dplyr)
 library(readr)
 library(cmdstanr)
+local({
+  versions <- sort(list.files(path.expand("~/.cmdstan"), pattern = "^cmdstan-", full.names = TRUE))
+  if (length(versions) == 0) stop("No CmdStan installation found in ~/.cmdstan")
+  set_cmdstan_path(versions[length(versions)])
+})
 options(
   brms.backend = "cmdstanr",
   mc.cores = 4,
