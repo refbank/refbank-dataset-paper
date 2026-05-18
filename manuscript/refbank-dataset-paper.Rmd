@@ -171,15 +171,6 @@ Shiny app / API / redivis versioning etc
 
 
 
-## The boring stuff: accuracy and reduction
-
-
-acc ~ rep_num + (rep_num | paper / condition) -- logistic
-
-log rt ~ rep_num + (rep_num | paper / condition) -- linear? or log log?
-
-
-
 ## Reduction
 
 ### Main effect of rep num 
@@ -192,7 +183,46 @@ try the different functional form options & report best fit b/c this is relevant
 * linear-log: words ~ log(rep)
 * linear as baseline 
 
+```{r}
+mod_loc <- "cached_model_files/mods"
 
+do_preds <- function(model){
+  mod <- here(model_loc,model) |> read_rds()
+  preds <- expand_grid(rep=1:6) |> 
+    add_linpred_draws(mod, value="predicted", re_formula=NA) |> 
+    group_by(rep) |> 
+    summarize(mean=mean(predicted),
+              low=quantile(predicted,.025),
+              high=quantile(predicted,.975))
+  return(preds)
+}
+```
+
+
+```{r}
+log_log_mod <- read_rds(here(mod_loc, "red_mod_log_log.rds"))
+log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
+lin_lin_mod <- read_rds(here(mod_loc, "red_mod_lin_lin.rds"))
+lin_log_mod <- read_rds(here(mod_loc, "red_mod_lin_log.rds"))
+
+```
+
+```{r}
+summary(log_log_mod)
+summary(log_lin_mod)
+summary(lin_log_mod)
+summary(lin_lin_mod)
+
+```
+
+
+```{r}
+loo_log_log <- loo(log_log_mod)
+```
+
+```{r}
+do_preds
+```
 
 ### Moderation by participant structure
 n-players, age-group (on stage 1 only, using n-players who are active at this point)
@@ -212,21 +242,21 @@ How do switches (like in partners) play out?
 
 
 ## PoS
-I think we should use modality as a moderator here? 
 
-hedges 
+```{r}
+pos_mod <- read_rds(here(mod_loc, "pos_mod.rds"))
+```
 
+```{r}
+summary(pos_mod)
+```
 
-definites --discussion point how to group the different categories!
+```{r}
 
-
-pos --discussion point how to group the different categories!
+```
 
 
 ## SBERT
-
-all of our favorite convergence / divergence measures 
-(w/o moderators??)
 
 
 

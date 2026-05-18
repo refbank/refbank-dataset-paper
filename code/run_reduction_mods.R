@@ -1,4 +1,5 @@
 library(brms)
+library(loo)
 library(here)
 library(dplyr)
 library(readr)
@@ -32,24 +33,66 @@ per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_d
 
 red_mod_log_log <- brm(log_words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
   file = here("cached_model_files/mods/red_mod_log_log.rds"),
+  file_refit = "on_change",
   prior = log_dv_priors,
+  save_pars = save_pars(all = TRUE),
   data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1) |> slice_sample(n = 10000)
 )
 
 red_mod_log_lin <- brm(log_words ~ rep_num + (rep_num || dataset_id / condition_id),
   file = here("cached_model_files/mods/red_mod_log_lin.rds"),
+  file_refit = "on_change",
   prior = log_dv_priors,
+  save_pars = save_pars(all = TRUE),
   data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1)
 )
 
 red_mod_lin_log <- brm(words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
   file = here("cached_model_files/mods/red_mod_lin_log.rds"),
+  file_refit = "on_change",
   prior = linear_dv_priors,
+  save_pars = save_pars(all = TRUE),
   data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1)
 )
 
 red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
   file = here("cached_model_files/mods/red_mod_lin_lin.rds"),
+  file_refit = "on_change",
   prior = linear_dv_priors,
+  save_pars = save_pars(all = TRUE),
   data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1)
 )
+
+# LOO computation -------------------------------------------------------------------
+
+# Standard LOO for same-DV comparisons (log_log vs log_lin; lin_log vs lin_lin).
+# Uses moment matching to handle high Pareto-k values common in hierarchical models.
+compute_and_cache_loo <- function(mod, path) {
+  if (file.exists(path)) return(readRDS(path))
+  result <- loo(mod, moment_match = TRUE)
+  saveRDS(result, path)
+  result
+}
+
+# Jacobian-corrected LOO for cross-DV comparison (all four models on original word-count scale).
+# For log-DV models: log p(y) = log p(log y) - log(y), so subtract log_words from each
+# observation's pointwise log-likelihood.
+compute_and_cache_corrected_loo <- function(mod, path) {
+  if (file.exists(path)) return(readRDS(path))
+  ll <- log_lik(mod)
+  nchains <- brms::nchains(mod)
+  r_eff <- loo::relative_eff(exp(ll), chain_id = rep(seq_len(nchains), each = nrow(ll) / nchains))
+  ll_corrected <- sweep(ll, 2, mod$data$log_words, "-")
+  result <- loo::loo(ll_corrected, r_eff = r_eff)
+  saveRDS(result, path)
+  result
+}
+
+loo_log_log <- compute_and_cache_loo(red_mod_log_log, here("cached_model_files/mods/loo_log_log.rds"))
+loo_log_lin <- compute_and_cache_loo(red_mod_log_lin, here("cached_model_files/mods/loo_log_lin.rds"))
+loo_lin_log <- compute_and_cache_loo(red_mod_lin_log, here("cached_model_files/mods/loo_lin_log.rds"))
+loo_lin_lin <- compute_and_cache_loo(red_mod_lin_lin, here("cached_model_files/mods/loo_lin_lin.rds"))
+
+# Corrected LOO only needed for log-DV models; linear-DV models are already on original scale
+loo_log_log_orig_scale <- compute_and_cache_corrected_loo(red_mod_log_log, here("cached_model_files/mods/loo_log_log_orig_scale.rds"))
+loo_log_lin_orig_scale <- compute_and_cache_corrected_loo(red_mod_log_lin, here("cached_model_files/mods/loo_log_lin_orig_scale.rds"))
