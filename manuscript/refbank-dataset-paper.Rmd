@@ -110,6 +110,23 @@ form <- function(model_form) {
     str_replace_all("\\+", "&nbsp;+ ") |>
     str_replace_all("~", "$\\\\sim$ ")
 }
+
+mod_loc <- "cached_model_files/mods"
+
+do_preds <- function(model){
+  mod <- here(model_loc,model) |> read_rds()
+  preds <- expand_grid(rep=1:6) |> 
+    add_linpred_draws(mod, value="predicted", re_formula=NA) |> 
+    group_by(rep) |> 
+    summarize(mean=mean(predicted),
+              low=quantile(predicted,.025),
+              high=quantile(predicted,.975))
+  return(preds)
+}
+
+smol_data <- function(mod){
+  mod$data |> group_by(across(any_of(c("rep_num", "log_rep_num", "dataset_id", "condition_id")))) |> slice_sample(n=50) |> ungroup()
+}
 ```
 
 
@@ -183,20 +200,6 @@ try the different functional form options & report best fit b/c this is relevant
 * linear-log: words ~ log(rep)
 * linear as baseline 
 
-```{r}
-mod_loc <- "cached_model_files/mods"
-
-do_preds <- function(model){
-  mod <- here(model_loc,model) |> read_rds()
-  preds <- expand_grid(rep=1:6) |> 
-    add_linpred_draws(mod, value="predicted", re_formula=NA) |> 
-    group_by(rep) |> 
-    summarize(mean=mean(predicted),
-              low=quantile(predicted,.025),
-              high=quantile(predicted,.975))
-  return(preds)
-}
-```
 
 
 ```{r}
@@ -208,21 +211,86 @@ lin_log_mod <- read_rds(here(mod_loc, "red_mod_lin_log.rds"))
 ```
 
 ```{r}
+do_pp_checks <- function(mod, group, dv){
+  lil_data <- smol_data(mod)
+   a <- pp_check(mod, type = "dens_overlay", ndraws = 10, newdata=lil_data)
+   b <-  pp_check(mod, type = "stat_grouped", stat = "mean", group = group, ndraws=10, newdata=lil_data)
+
+    c <-   pp_check(mod, type = "stat_grouped", stat = "sd", group = group, ndraws=10, newdata=lil_data)
+    d <-     pp_check(mod, type = "scatter_avg", ndraws=10, new_data=lil_data)
+   if(dv=="log"){
+     b <- b+coord_cartesian(xlim=c(0,6))
+     c <- c+coord_cartesian(xlim=c(0,6))
+   }
+    if(dv=="lin"){
+     b <- b+coord_cartesian(xlim=c(0,50))
+     c <- c+coord_cartesian(xlim=c(0,50))
+    }
+    if(dv=="sim"){
+     b <- b+coord_cartesian(xlim=c(0,1))
+     c <- c+coord_cartesian(xlim=c(0,1))
+   }
+list(a,b,c,d)
+}
+```
+
+```{r}
 summary(log_log_mod)
+
+do_pp_checks(log_log_mod, "log_rep_num", "log")
+  
+
+
+```
+
+
+```{r}
 summary(log_lin_mod)
+
+do_pp_checks(log_lin_mod, "rep_num", "log")
+```
+
+
+```{r}
 summary(lin_log_mod)
+
+do_pp_checks(lin_log_mod, "log_rep_num", "lin")
+```
+
+
+```{r}
 summary(lin_lin_mod)
 
+do_pp_checks(lin_lin_mod, "rep_num", "lin")
+
 ```
 
 
 ```{r}
-loo_log_log <- loo(log_log_mod)
+loo_log_log        <- readRDS(here(mod_loc, "loo_log_log.rds"))
+  loo_log_lin        <- readRDS(here(mod_loc, "loo_log_lin.rds"))
+  loo_lin_log        <- readRDS(here(mod_loc, "loo_lin_log.rds"))
+  loo_lin_lin        <- readRDS(here(mod_loc, "loo_lin_lin.rds"))
+  loo_log_log_orig   <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
+  loo_log_lin_orig   <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
+
+```
+
+
+```{r}
+
+loo_compare(list(log_log = loo_log_log_orig, log_lin=loo_log_lin_orig,lin_log= loo_lin_log, lin_lin=loo_lin_lin)) |> print(simplify=F)
+
+loo_compare(list(log_log=loo_log_log, log_lin = loo_log_lin))
 ```
 
 ```{r}
-do_preds
+pred_log_log = predict(log_log_mod)
+
+pred_log_lin = predict(log_lin_mod)
 ```
+
+so uh, the power law people aren't right? at least on this data.
 
 ### Moderation by participant structure
 n-players, age-group (on stage 1 only, using n-players who are active at this point)
@@ -253,13 +321,85 @@ summary(pos_mod)
 
 ```{r}
 
+  pos_pp_check <- function(mod, category, newdata) {
+    preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
+    # preds is [ndraws, nobs, ncategories]
+    cat_idx <- which(dimnames(preds)[[3]] == category)
+    if (length(cat_idx) == 0) {
+      stop("Category '", category, "' not found. Available: ",
+           paste(dimnames(preds)[[3]], collapse = ", "))
+    }
+
+    obs <- newdata |>
+      mutate(prop = .data[[category]] / total) |>
+      group_by(rep_num) |>
+      summarize(mean_prop = mean(prop))
+
+    pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
+      newdata |>
+        mutate(pred_prop = preds[draw, , cat_idx]/total) |>
+        group_by(rep_num) |>
+        summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+        mutate(draw = draw)
+    ) |> list_rbind()
+
+    ggplot() +
+      geom_line(data = pred_lines, aes(x = rep_num, y = mean_prop, group = draw),
+                color = "lightblue", alpha = 0.5) +
+      geom_line(data = obs, aes(x = rep_num, y = mean_prop), color = "darkblue") +
+      geom_point(data = obs, aes(x = rep_num, y = mean_prop), color = "darkblue") +
+      labs(title = category, y = "Mean proportion", x = "Repetition")+coord_cartesian(ylim=c(0,.6))
+  }
+
+
+
+
+pos_pp_checks <- function(mod) {
+    categories <- c("NOUN", "VERB", "MODIFIER", "FUNCTION", "DET", "PRON")
+    newdata_small <- mod$data |>
+      filter(!is.na(total)) |>
+      filter(total!=0) |> 
+      group_by(rep_num, condition_id, dataset_id) |>
+      slice_sample(n = 50) |>
+      ungroup()
+
+    lapply(setNames(categories, categories), \(cat) pos_pp_check(mod, cat, newdata_small))
+  }
+
+
+
 ```
+
+```{r}
+pos_pp_checks(pos_mod)
+
+```
+
+
 
 
 ## SBERT
 
+```{r}
+to_next_mod <- read_rds(here(mod_loc, "to_next_mod.rds"))
+diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
+```
 
+```{r}
 
+summary(to_next_mod)
+
+do_pp_checks(to_next_mod, "rep_num", "sim")
+
+```
+
+```{r}
+
+summary(diverge_mod)
+
+do_pp_checks(diverge_mod, "rep_num", "sim")
+
+```
 # Discussion
 summary of what we did and results
 
