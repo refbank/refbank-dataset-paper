@@ -36,7 +36,7 @@ red_mod_log_log <- brm(log_words ~ log_rep_num + (log_rep_num || dataset_id / co
   file_refit = "on_change",
   prior = log_dv_priors,
   save_pars = save_pars(all = TRUE),
-  data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1) |> slice_sample(n = 10000)
+  data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1)
 )
 
 red_mod_log_lin <- brm(log_words ~ rep_num + (rep_num || dataset_id / condition_id),
@@ -68,8 +68,10 @@ red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
 # Standard LOO for same-DV comparisons (log_log vs log_lin; lin_log vs lin_lin).
 # Uses moment matching to handle high Pareto-k values common in hierarchical models.
 compute_and_cache_loo <- function(mod, path) {
-  if (file.exists(path)) return(readRDS(path))
-  result <- loo(mod, moment_match = TRUE)
+  if (file.exists(path)) {
+    return(readRDS(path))
+  }
+  result <- loo(mod, moment_match = TRUE, recompile = TRUE)
   saveRDS(result, path)
   result
 }
@@ -78,7 +80,9 @@ compute_and_cache_loo <- function(mod, path) {
 # For log-DV models: log p(y) = log p(log y) - log(y), so subtract log_words from each
 # observation's pointwise log-likelihood.
 compute_and_cache_corrected_loo <- function(mod, path) {
-  if (file.exists(path)) return(readRDS(path))
+  if (file.exists(path)) {
+    return(readRDS(path))
+  }
   ll <- log_lik(mod)
   nchains <- brms::nchains(mod)
   r_eff <- loo::relative_eff(exp(ll), chain_id = rep(seq_len(nchains), each = nrow(ll) / nchains))
