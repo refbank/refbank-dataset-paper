@@ -36,3 +36,12 @@ pos_mod <- brm(
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1)
 )
+
+pos_mod_log <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ log_rep_num +
+    (log_rep_num || dataset_id / condition_id),
+  family = multinomial(),
+  file = here("cached_model_files/mods/pos_log_mod.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_for_model |> filter(stage_num == 1)
+)

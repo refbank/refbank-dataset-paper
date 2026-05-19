@@ -95,12 +95,6 @@ red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
 #                    prior=log_dv_priors,
 #                    data=per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num==1))
 
-#
-# red_mod_stage <- brm(log_words~ rep_num*stage_num + (rep_num | dataset_id / condition_id ),
-#                    file=here("cached_model_files/mods/red_mod_stage.rds"),
-#                    prior=log_dv_priors,
-#                    data=per_describer_for_model |> filter(!is.na(log_words)) )
-
 
 ### Pos/etc
 

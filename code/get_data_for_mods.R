@@ -3,33 +3,39 @@ library(tidyr)
 library(dplyr)
 library(stringr)
 library(readr)
-favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing_cued")
+favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing")
 
+version <- "v12.1"
 
 ### get data from redivis
-conditions <- get_conditions(datasets = favorite_datasets)
+conditions <- get_conditions(datasets = favorite_datasets, version = version)
+trials <- get_trials(datasets = favorite_datasets, version = version)
+images <- get_images(datasets = favorite_datasets, version = version)
+messages <- get_messages(datasets = favorite_datasets, version = version)
+pos <- get_annotated_messages(datasets = favorite_datasets, version = version)
+sbert <- get_cosine_similarities(datasets = favorite_datasets, sim_type = c("to_next", "diverge"), version = version)
 
-trials <- get_trials(datasets = favorite_datasets)
-
-# choices <- get_choices(datasets = favorite_datasets)
-
-messages <- get_messages(datasets = favorite_datasets)
-
-images <- get_images(datasets = favorite_datasets)
-
-pos <- get_annotated_messages(datasets = favorite_datasets)
-
-sbert <- get_cosine_similarities(datasets = favorite_datasets, sim_type = c("to_next", "diverge"))
+combined_conditions <- trials |>
+  left_join(images, by = c("target" = "image_id", "dataset_id")) |>
+  rowwise() |>
+  mutate(
+    players = str_split(matchers, ";"),
+    n_players = (players |> length()) + 1
+  ) |>
+  select(dataset_id, condition_id, option_size, image_type, n_players) |>
+  group_by(dataset_id, condition_id, option_size, image_type, n_players) |>
+  tally() |>
+  group_by(dataset_id, condition_id) |>
+  arrange(desc(n)) |>
+  slice(1) |>
+  select(-n) |>
+  left_join(conditions) |>
+  mutate(dataset_cond = str_c(dataset_id, "_", condition_id)) |>
+  write_rds("cached_model_files/data_for_mods/condition_preds.rds")
 
 # apply exclusions
 
 valid_trials_misc <- trials |> filter(!exclusion_reason %in% c("describer didn't talk", "speaker typed nonsense"))
-
-valid_trials_choices <- choices |>
-  filter(!is.na(choice_id)) |>
-  filter(choice_id != "timed_out") |>
-  select(dataset_id, trial_id) |>
-  unique()
 
 valid_trials_messages <- messages |>
   filter(role == "describer") |>
@@ -37,9 +43,7 @@ valid_trials_messages <- messages |>
   select(dataset_id, trial_id) |>
   unique()
 
-valid_trials <- valid_trials_choices |>
-  bind_rows(valid_trials_messages) |>
-  unique() |>
+valid_trials <- valid_trials_messages |>
   inner_join(valid_trials_misc)
 
 
@@ -66,23 +70,6 @@ valid_games <- valid_trials |>
 
 valid_trials_games <- valid_trials |> inner_join(valid_games)
 
-### set up for models and write to disk
-
-# for accuracy and rt model -- one row per matcher response
-# per_matcher_for_model <- choices |>
-#   inner_join(valid_trials_games) |>
-#   select(trial_id, condition_id, dataset_id, target, choice_id, time_stamp, rep_num, stage_num) |>
-#   filter(!is.na(choice_id)) |>
-#   mutate(correct = ifelse(choice_id == target, 1, 0)) |>
-#   mutate(log_rt = log(time_stamp)) |>
-#   mutate(log_rep_num = log(rep_num)) |>
-#   select(correct, log_rt, rep_num, log_rep_num, dataset_id, condition_id, stage_num)
-#
-#
-# write_rds(here("cached_model_files/data_for_mods/per_matcher_for_model.rds"))
-
-
-# for all other models -- one row per describer/trial
 words <- messages |>
   inner_join(valid_trials_games) |>
   filter(role == "describer") |>

@@ -240,7 +240,7 @@ summary(log_log_mod)
 do_pp_checks(log_log_mod, "log_rep_num", "log")
   
 
-
+pp_check(log_log_mod)
 ```
 
 
@@ -288,12 +288,20 @@ loo_compare(list(log_log=loo_log_log, log_lin = loo_log_lin))
 pred_log_log = predict(log_log_mod)
 
 pred_log_lin = predict(log_lin_mod)
+
+mean(abs(pred_log_log - pred_log_lin))
+
+
 ```
 
 so uh, the power law people aren't right? at least on this data.
 
 ### Moderation by participant structure
 n-players, age-group (on stage 1 only, using n-players who are active at this point)
+
+```{r}
+coef(log_log_mod)$`dataset_id:condition_id` |> as_tibble(rownames="dataset")
+```
 
 
 ### Moderation by expt design / communication channel
@@ -302,10 +310,6 @@ thickness, modality (can maybe break up feedback / backchannel / role rotation?)
 ### Stim sets
 type of stims x n targets 
 
-
-### Stage num 
-How do switches (like in partners) play out?
---> switching partners leads to zig-zags
 
 
 
@@ -374,6 +378,11 @@ pos_pp_checks <- function(mod) {
 pos_pp_checks(pos_mod)
 
 ```
+```{r}
+pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num) |> 
+  pivot_longer(NOUN:PRON) |> ggplot(aes(x=log(rep_num), y=value/total))+stat_summary()+stat_summary(geom="line")+facet_wrap(~name)
+```
+
 
 
 
