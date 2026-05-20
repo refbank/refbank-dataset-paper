@@ -300,7 +300,16 @@ so uh, the power law people aren't right? at least on this data.
 n-players, age-group (on stage 1 only, using n-players who are active at this point)
 
 ```{r}
-coef(log_log_mod)$`dataset_id:condition_id` |> as_tibble(rownames="dataset")
+
+log_lin_pred <- read_rds(here(mod_loc, "log_lin_pred.rds"))
+
+log_log_pred <- read_rds(here(mod_loc, "log_log_pred.rds"))
+```
+
+```{r}
+summary(log_lin_pred)
+
+summary(log_log_pred)
 ```
 
 
