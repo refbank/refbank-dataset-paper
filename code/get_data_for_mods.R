@@ -97,9 +97,6 @@ pos_summary <- pos |>
   select(-c(ADV, ADJ, ADP, AUX, CCONJ, SCONJ))
 
 
-
-
-
 condition_info <- conditions |> select(condition_id, dataset_id, age_group = population, modality, feedback, backchannel, role_constancy)
 
 stim_type <- images |> select(target = image_id, image_type, dataset_id)
@@ -116,8 +113,19 @@ per_describer_for_model <- valid_trials_games |>
   saveRDS("cached_model_files/data_for_mods/per_describer_for_model.rds")
 
 
-sims_for_model <- sbert |>
+to_next <- sbert |>
   select(sim_type, condition_id, stage_num, dataset_id, sim, rep_num, earlier, later) |>
+  filter(sim_type == "to_next")
+
+diverge <- sbert |>
+  filter(sim_type == "diverge") |>
+  mutate(game_id = game_id_1) |>
+  bind_rows(sbert |> filter(sim_type == "diverge") |> mutate(game_id = game_id_2)) |>
+  group_by(sim_type, game_id, target, condition_id, dataset_id, rep_num, stage_num) |>
+  summarize(sim = mean(sim, na.rm = T))
+
+sim_for_model <- to_next |>
+  bind_rows(diverge) |>
   mutate(rep_num = case_when(
     sim_type %in% c("diverge") ~ rep_num,
     sim_type == "to_next" ~ earlier,

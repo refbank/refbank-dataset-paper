@@ -51,7 +51,6 @@ header-includes   :
 ---
 
 ```{r setup, include = FALSE}
-library("papaja")
 
 knitr::opts_chunk$set(
   fig.width = 3, fig.height = 3, fig.crop = F,
@@ -60,10 +59,6 @@ knitr::opts_chunk$set(
   message = F, sanitize = T
 )
 
-library(png)
-library(grid)
-library(ggplot2)
-library(xtable)
 library(tidyverse)
 library(here)
 library(brms)
@@ -294,10 +289,18 @@ mean(abs(pred_log_log - pred_log_lin))
 
 ```
 
-so uh, the power law people aren't right? at least on this data.
 
-### Moderation by participant structure
-n-players, age-group (on stage 1 only, using n-players who are active at this point)
+
+## Moderators
+
+Two possible approaches to moderators
+
+1. take the first models, then predict the slopes for each condition based on all the predictor variables (runs fast )
+
+2. run full models with groups of predictors
+
+
+### Approach 1
 
 ```{r}
 
@@ -313,23 +316,86 @@ summary(log_log_pred)
 ```
 
 
+### Approach 2
+
+```{r}
+
+participants_log_log <- read_rds(here(mod_loc, "red_mod_log_log_participants.rds"))
+
+participants_log_lin <- read_rds(here(mod_loc, "red_mod_log_lin_participants.rds"))
+
+channel_log_log <- read_rds(here(mod_loc, "red_mod_log_log_channel.rds"))
+
+
+channel_log_lin <- read_rds(here(mod_loc, "red_mod_log_lin_channel.rds"))
+
+```
+
+```{r}
+summary(participants_log_log)
+
+summary(participants_log_lin)
+
+```
+
+```{r}
+summary(channel_log_log)
+
+summary(channel_log_lin)
+
+```
+
+
+### Moderation by participant structure
+n-players, age-group (on stage 1 only, using n-players who are active at this point)
+
+So, comparing for n-players 
+* log-log slope model: -.01 (-.06 - .04 )
+* log-lin slope model: -.01 (-.02 - .01 )
+* log-log full model: -.01 (-.04 - .02 )
+* log-lin full model: -.01 (-.02 - -0 )
+
+pilot samples doesn't have age-group variation 
+
 ### Moderation by expt design / communication channel
 thickness, modality (can maybe break up feedback / backchannel / role rotation?)
+
+For role-constancy (yes):
+* log-log slope model: -.03 (-.23 - .18)
+* log-lin slope model: .00 (-.08 - .09)
+* log-log full model: -.05 (-.31 - .18)
+* log-lin full model: 0.00 (-.09 - .09)
+
+For feedback (limited):
+* log-log slope model: .01 (-.19 - .21)
+* log-lin slope model: -.01 (-.09 - .08)
+* log-log full model: -.05 (-.30 - .20)
+* log-lin full model: -.01 (-.10 - .08)
+
+For backchannel (limited):
+* log-log slope model: .31 (.08 - .50)
+* log-lin slope model: .14 (.06 - .21)
+* log-log full model: .38 (.15 - .60)
+* log-lin full model: .15 (.06 - .23)
 
 ### Stim sets
 type of stims x n targets 
 
-
+no variation to compare in this set
 
 
 ## PoS
 
 ```{r}
 pos_mod <- read_rds(here(mod_loc, "pos_mod.rds"))
+
+pos_mod_log <- read_rds(here(mod_loc, "pos_log_mod.rds"))
 ```
 
 ```{r}
 summary(pos_mod)
+
+summary(pos_mod_log)
 ```
 
 ```{r}
@@ -345,16 +411,21 @@ summary(pos_mod)
 
     obs <- newdata |>
       mutate(prop = .data[[category]] / total) |>
-      group_by(rep_num) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num")))) |>
       summarize(mean_prop = mean(prop))
 
     pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
       newdata |>
         mutate(pred_prop = preds[draw, , cat_idx]/total) |>
-        group_by(rep_num) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num")))) |>
         summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
         mutate(draw = draw)
     ) |> list_rbind()
+
+  if (!"rep_num" %in% names(obs)) {
+    pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
+    obs <- obs |> mutate(rep_num=exp(log_rep_num))
+  }
 
     ggplot() +
       geom_line(data = pred_lines, aes(x = rep_num, y = mean_prop, group = draw),
@@ -372,7 +443,7 @@ pos_pp_checks <- function(mod) {
     newdata_small <- mod$data |>
       filter(!is.na(total)) |>
       filter(total!=0) |> 
-      group_by(rep_num, condition_id, dataset_id) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
       slice_sample(n = 50) |>
       ungroup()
 
@@ -385,8 +456,13 @@ pos_pp_checks <- function(mod) {
 
 ```{r}
 pos_pp_checks(pos_mod)
-
 ```
+
+
+```{r}
+pos_pp_checks(pos_mod_log)
+```
+
 ```{r}
 pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num) |> 
   pivot_longer(NOUN:PRON) |> ggplot(aes(x=log(rep_num), y=value/total))+stat_summary()+stat_summary(geom="line")+facet_wrap(~name)
@@ -400,7 +476,7 @@ pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num
 
 ```{r}
 to_next_mod <- read_rds(here(mod_loc, "to_next_mod.rds"))
-diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
+#diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
 ```
 
 ```{r}
