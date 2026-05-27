@@ -24,16 +24,14 @@ p_intercept_sim <- prior_string("normal(1, 1.5)", class = "Intercept")
 
 sim_priors <- c(p_intercept_sim, p_beta_sim, p_sd_sim)
 
-to_next_mod <- brm(sim ~ rep_num + (rep_num || dataset_id / condition_id),
-  family = ordbeta(), # <-- this line
+to_next_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
+  manual_prior = sim_priors,
   file = here("cached_model_files/mods/to_next_mod.rds"),
-  prior = sim_priors,
   data = sims_for_model |> filter(sim_type == "to_next")
 )
 
-diverge_mod <- brm(sim ~ rep_num + (rep_num || dataset_id / condition_id),
-  family = ordbeta(),
+diverge_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
+  manual_prior = sim_priors,
   file = here("cached_model_files/mods/diverge_mod.rds"),
-  prior = sim_priors,
   data = sims_for_model |> filter(sim_type == "diverge")
 )
