@@ -3,7 +3,7 @@
 ## CmdStan compilation takes ~30-60 minutes.
 ## Safe to rerun -- skips anything already installed.
 
-packages <- c("dplyr", "readr", "here", "brms", "cmdstanr")
+packages <- c("dplyr", "readr", "here", "brms", "cmdstanr", "ordbetareg")
 
 to_install <- packages[!packages %in% installed.packages()[, "Package"]]
 if (length(to_install) > 0) {
