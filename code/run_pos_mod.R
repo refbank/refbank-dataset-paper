@@ -45,3 +45,12 @@ pos_mod_log <- brm(
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1)
 )
+
+pos_mod_inv <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ inv_rep_num +
+    (inv_rep_num || dataset_id / condition_id),
+  family = multinomial(),
+  file = here("cached_model_files/mods/pos_log_inv.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
+)

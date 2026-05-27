@@ -411,13 +411,13 @@ summary(pos_mod_log)
 
     obs <- newdata |>
       mutate(prop = .data[[category]] / total) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num")))) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
       summarize(mean_prop = mean(prop))
 
     pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
       newdata |>
         mutate(pred_prop = preds[draw, , cat_idx]/total) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num")))) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
         summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
         mutate(draw = draw)
     ) |> list_rbind()
@@ -427,19 +427,20 @@ summary(pos_mod_log)
     obs <- obs |> mutate(rep_num=exp(log_rep_num))
   }
 
-    ggplot() +
-      geom_line(data = pred_lines, aes(x = rep_num, y = mean_prop, group = draw),
-                color = "lightblue", alpha = 0.5) +
-      geom_line(data = obs, aes(x = rep_num, y = mean_prop), color = "darkblue") +
-      geom_point(data = obs, aes(x = rep_num, y = mean_prop), color = "darkblue") +
-      labs(title = category, y = "Mean proportion", x = "Repetition")+coord_cartesian(ylim=c(0,.6))
+    ggplot(data=pred_lines, aes(color=as.factor(condition_id))) +
+      geom_line(data = pred_lines, aes(x = rep_num, y = mean_prop, group=interaction(draw, condition_id)),
+               alpha = 0.5) +
+      geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty="dashed") +
+      geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
+      labs(title = category, y = "Mean proportion", x = "Repetition")+coord_cartesian(ylim=c(0,.6))+theme(legend.position = "none")+facet_wrap(~(as.numeric(condition_id)%/%3))
   }
 
 
 
 
 pos_pp_checks <- function(mod) {
-    categories <- c("NOUN", "VERB", "MODIFIER", "FUNCTION", "DET", "PRON")
+    categories <- c("NOUN", "FUNCTION" #"VERB", "MODIFIER",  "DET", "PRON"
+                    )
     newdata_small <- mod$data |>
       filter(!is.na(total)) |>
       filter(total!=0) |> 
