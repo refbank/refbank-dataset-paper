@@ -29,7 +29,6 @@ log_dv_priors <- c(p_intercept_logscale, p_beta, p_sd)
 linear_dv_priors <- c(p_intercept_linear, p_beta_linear, p_sd_linear)
 
 per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_describer_for_model.rds")) |>
-  mutate(condition_id = as.factor(condition_id)) |>
   left_join(read_rds(here("cached_model_files/data_for_mods/condition_preds.rds")))
 
 
