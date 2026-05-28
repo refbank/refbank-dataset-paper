@@ -392,6 +392,12 @@ pos_mod <- read_rds(here(mod_loc, "pos_mod.rds"))
 pos_mod_log <- read_rds(here(mod_loc, "pos_log_mod.rds"))
 
 pos_mod_inv <- read_rds(here(mod_loc, "pos_log_inv.rds"))
+
+pos_mod_2 <- read_rds(here(mod_loc, "pos_mod_2.rds"))
+
+pos_mod_log_2 <- read_rds(here(mod_loc, "pos_log_mod_2.rds"))
+
+pos_mod_inv_2 <- read_rds(here(mod_loc, "pos_log_inv_2.rds"))
 ```
 
 ```{r}
@@ -469,6 +475,10 @@ inv_posterior <- pos_pp_checks(pos_mod_inv)
 lin_posterior <- pos_pp_checks(pos_mod)
 log_posterior <- pos_pp_checks(pos_mod_log)
 
+inv_posterior_2 <- pos_pp_checks(pos_mod_inv_2)
+lin_posterior_2 <- pos_pp_checks(pos_mod_2)
+log_posterior_2 <- pos_pp_checks(pos_mod_log_2)
+
 ```
 
 
@@ -478,10 +488,24 @@ library(cowplot)
 plot_grid(inv_posterior$NOUN, inv_posterior$FUNCTION, inv_posterior$VERB, 
           inv_posterior$MODIFIER, inv_posterior$DET, inv_posterior$PRON)
 ```
+
+```{r, fig.width=10, fig.height=8}
+
+library(cowplot)
+plot_grid(inv_posterior_2$NOUN, inv_posterior_2$FUNCTION, inv_posterior_2$VERB, 
+          inv_posterior_2$MODIFIER, inv_posterior_2$DET, inv_posterior_2$PRON)
+```
+
 ```{r, fig.width=10, fig.height=8}
 
 plot_grid(lin_posterior$NOUN, lin_posterior$FUNCTION, lin_posterior$VERB, 
           lin_posterior$MODIFIER, lin_posterior$DET, lin_posterior$PRON)
+```
+
+```{r, fig.width=10, fig.height=8}
+
+plot_grid(lin_posterior_2$NOUN, lin_posterior_2$FUNCTION, lin_posterior_2$VERB, 
+          lin_posterior_2$MODIFIER, lin_posterior_2$DET, lin_posterior_2$PRON)
 ```
 
 
@@ -490,6 +514,13 @@ plot_grid(lin_posterior$NOUN, lin_posterior$FUNCTION, lin_posterior$VERB,
 library(cowplot)
 plot_grid(log_posterior$NOUN, log_posterior$FUNCTION, log_posterior$VERB, 
           log_posterior$MODIFIER, log_posterior$DET, log_posterior$PRON)
+```
+
+```{r, fig.width=10, fig.height=8}
+
+library(cowplot)
+plot_grid(log_posterior_2$NOUN, log_posterior_2$FUNCTION, log_posterior_2$VERB, 
+          log_posterior_2$MODIFIER, log_posterior_2$DET, log_posterior_2$PRON)
 ```
 
 

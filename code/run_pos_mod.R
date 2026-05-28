@@ -1,4 +1,5 @@
 library(brms)
+library(ordbetareg)
 library(here)
 library(dplyr)
 library(readr)
@@ -80,4 +81,71 @@ pos_mod_inv_take_2 <- brm(
   file = here("cached_model_files/mods/pos_log_inv_2.rds"),
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
+)
+
+pos_mod_factor <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ as.factor(rep_num) +
+    (as.factor(rep_num) || condition_id),
+  family = multinomial(),
+  file = here("cached_model_files/mods/pos_mod_factor.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_for_model |> filter(stage_num == 1)
+)
+
+p_beta_ordbeta <- prior_string("normal(0, 0.5)", class = "b")
+p_sd_ordbeta <- prior_string("normal(0, 0.5)", class = "sd")
+p_intercept_ordbeta <- prior_string("normal(0, 1.5)", class = "Intercept")
+ordbeta_priors <- c(p_intercept_ordbeta, p_beta_ordbeta, p_sd_ordbeta)
+
+pos_data <- per_describer_for_model |>
+  filter(stage_num == 1, !is.na(total), total != 0) |>
+  mutate(
+    prop_NOUN     = NOUN / total,
+    prop_VERB     = VERB / total,
+    prop_MODIFIER = MODIFIER / total,
+    prop_FUNCTION = FUNCTION / total,
+    prop_DET      = DET / total,
+    prop_PRON     = PRON / total
+  )
+
+ordbeta_NOUN <- ordbetareg(
+  prop_NOUN ~ log_rep_num + (log_rep_num || condition_id),
+  manual_prior = ordbeta_priors,
+  file = here("cached_model_files/mods/pos_ordbeta_NOUN.rds"),
+  data = pos_data
+)
+
+ordbeta_VERB <- ordbetareg(
+  prop_VERB ~ log_rep_num + (log_rep_num || condition_id),
+  manual_prior = ordbeta_priors,
+  file = here("cached_model_files/mods/pos_ordbeta_VERB.rds"),
+  data = pos_data
+)
+
+ordbeta_MODIFIER <- ordbetareg(
+  prop_MODIFIER ~ log_rep_num + (log_rep_num || condition_id),
+  manual_prior = ordbeta_priors,
+  file = here("cached_model_files/mods/pos_ordbeta_MODIFIER.rds"),
+  data = pos_data
+)
+
+ordbeta_FUNCTION <- ordbetareg(
+  prop_FUNCTION ~ log_rep_num + (log_rep_num || condition_id),
+  manual_prior = ordbeta_priors,
+  file = here("cached_model_files/mods/pos_ordbeta_FUNCTION.rds"),
+  data = pos_data
+)
+
+ordbeta_DET <- ordbetareg(
+  prop_DET ~ log_rep_num + (log_rep_num || condition_id),
+  manual_prior = ordbeta_priors,
+  file = here("cached_model_files/mods/pos_ordbeta_DET.rds"),
+  data = pos_data
+)
+
+ordbeta_PRON <- ordbetareg(
+  prop_PRON ~ log_rep_num + (log_rep_num || condition_id),
+  manual_prior = ordbeta_priors,
+  file = here("cached_model_files/mods/pos_ordbeta_PRON.rds"),
+  data = pos_data
 )
