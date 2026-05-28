@@ -54,3 +54,30 @@ pos_mod_inv <- brm(
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
 )
+
+pos_mod_take_2 <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ rep_num +
+    (rep_num || condition_id),
+  family = multinomial(),
+  file = here("cached_model_files/mods/pos_mod_2.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_for_model |> filter(stage_num == 1)
+)
+
+pos_mod_log_take_2 <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ log_rep_num +
+    (log_rep_num || condition_id),
+  family = multinomial(),
+  file = here("cached_model_files/mods/pos_log_mod_2.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_for_model |> filter(stage_num == 1)
+)
+
+pos_mod_inv_take_2 <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ inv_rep_num +
+    (inv_rep_num || condition_id),
+  family = multinomial(),
+  file = here("cached_model_files/mods/pos_log_inv_2.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
+)
