@@ -24,6 +24,8 @@ p_intercept_sim <- prior_string("normal(1, 1.5)", class = "Intercept")
 
 sim_priors <- c(p_intercept_sim, p_beta_sim, p_sd_sim)
 
+sims_for_model <- read_rds(here("cached_model_files/data_for_mods/sims_for_model.rds"))
+
 to_next_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
   manual_prior = sim_priors,
   file = here("cached_model_files/mods/to_next_mod.rds"),

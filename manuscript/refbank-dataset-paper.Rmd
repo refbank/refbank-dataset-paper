@@ -390,12 +390,16 @@ no variation to compare in this set
 pos_mod <- read_rds(here(mod_loc, "pos_mod.rds"))
 
 pos_mod_log <- read_rds(here(mod_loc, "pos_log_mod.rds"))
+
+pos_mod_inv <- read_rds(here(mod_loc, "pos_log_inv.rds"))
 ```
 
 ```{r}
 summary(pos_mod)
 
 summary(pos_mod_log)
+
+summary(pos_mod_inv)
 ```
 
 ```{r}
@@ -411,20 +415,25 @@ summary(pos_mod_log)
 
     obs <- newdata |>
       mutate(prop = .data[[category]] / total) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
       summarize(mean_prop = mean(prop))
 
     pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
       newdata |>
         mutate(pred_prop = preds[draw, , cat_idx]/total) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
         summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
         mutate(draw = draw)
     ) |> list_rbind()
 
-  if (!"rep_num" %in% names(obs)) {
+  if ("log_rep_num" %in% names(obs)) {
     pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
     obs <- obs |> mutate(rep_num=exp(log_rep_num))
+  }
+    
+  if ("inv_rep_num" %in% names(obs)) {
+    pred_lines <- pred_lines |> mutate(rep_num = -1/inv_rep_num)
+    obs <- obs |> mutate(rep_num=-1/inv_rep_num)
   }
 
     ggplot(data=pred_lines, aes(color=as.factor(condition_id))) +
@@ -432,19 +441,19 @@ summary(pos_mod_log)
                alpha = 0.5) +
       geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty="dashed") +
       geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-      labs(title = category, y = "Mean proportion", x = "Repetition")+coord_cartesian(ylim=c(0,.6))+theme(legend.position = "none")+facet_wrap(~(as.numeric(condition_id)%/%3))
+      labs(title = category, y = "Mean proportion", x = "Repetition")+coord_cartesian(ylim=c(0,.6))+theme(legend.position = "none")+facet_wrap(~(as.numeric(condition_id)%%5))
   }
 
 
 
 
 pos_pp_checks <- function(mod) {
-    categories <- c("NOUN", "FUNCTION" #"VERB", "MODIFIER",  "DET", "PRON"
+    categories <- c("NOUN", "FUNCTION", "VERB", "MODIFIER",  "DET", "PRON"
                     )
     newdata_small <- mod$data |>
       filter(!is.na(total)) |>
       filter(total!=0) |> 
-      group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
+      group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
       slice_sample(n = 50) |>
       ungroup()
 
@@ -456,13 +465,34 @@ pos_pp_checks <- function(mod) {
 ```
 
 ```{r}
-pos_pp_checks(pos_mod)
+inv_posterior <- pos_pp_checks(pos_mod_inv)
+lin_posterior <- pos_pp_checks(pos_mod)
+log_posterior <- pos_pp_checks(pos_mod_log)
+
 ```
 
 
-```{r}
-pos_pp_checks(pos_mod_log)
+```{r, fig.width=10, fig.height=8}
+
+library(cowplot)
+plot_grid(inv_posterior$NOUN, inv_posterior$FUNCTION, inv_posterior$VERB, 
+          inv_posterior$MODIFIER, inv_posterior$DET, inv_posterior$PRON)
 ```
+```{r, fig.width=10, fig.height=8}
+
+plot_grid(lin_posterior$NOUN, lin_posterior$FUNCTION, lin_posterior$VERB, 
+          lin_posterior$MODIFIER, lin_posterior$DET, lin_posterior$PRON)
+```
+
+
+```{r, fig.width=10, fig.height=8}
+
+library(cowplot)
+plot_grid(log_posterior$NOUN, log_posterior$FUNCTION, log_posterior$VERB, 
+          log_posterior$MODIFIER, log_posterior$DET, log_posterior$PRON)
+```
+
+
 
 ```{r}
 pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num) |> 
