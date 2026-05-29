@@ -409,6 +409,119 @@ summary(pos_mod_inv)
 ```
 
 ```{r}
+prior_summary(pos_mod_log)
+```
+
+```{r}
+VarCorr(pos_mod_log)
+VarCorr(pos_mod_log_2)
+```
+
+```{r}
+# Prior predictive check: sample directly from the priors to see what range of
+# outcomes they allow before looking at data.
+#
+# Two questions:
+#  1. Fixed effects only: does the prior allow NOUN to be as dominant as observed?
+#  2. With condition random effects: does the prior allow as much condition spread
+#     as observed?
+#
+# NOUN is the reference category in the multinomial; all others are modelled on
+# the log-ratio scale relative to NOUN. Priors: intercepts normal(0,1.5),
+# slopes normal(0,0.5), random effect SDs normal+(0,0.5).
+
+categories_nonref <- c("DET", "FUNCTION", "MODIFIER", "NOUN", "VERB")
+
+prior_pred_fixed <- function(n_draws = 200, rep_nums = 1:6) {
+  map_dfr(seq_len(n_draws), \(d) {
+    alpha <- setNames(rnorm(length(categories_nonref), 0, 1.5), categories_nonref)
+    beta  <- setNames(rnorm(length(categories_nonref), 0, 0.5), categories_nonref)
+    map_dfr(rep_nums, \(r) {
+      log_ratios <- alpha + beta * log(r)
+      all_logits <- c(PRON = 0, log_ratios)
+      props <- exp(all_logits) / sum(exp(all_logits))
+      tibble(rep_num = r, draw = d, category = names(props), prop = props)
+    })
+  })
+}
+
+prior_pred_conditions <- function(n_draws = 50, n_conditions = 30, rep_nums = 1:6) {
+  map_dfr(seq_len(n_draws), \(d) {
+    alpha    <- setNames(rnorm(length(categories_nonref), 0, 1.5), categories_nonref)
+    beta     <- setNames(rnorm(length(categories_nonref), 0, 0.5), categories_nonref)
+    sd_int   <- abs(rnorm(1, 0, 0.5))
+    sd_slope <- abs(rnorm(1, 0, 0.5))
+    map_dfr(seq_len(n_conditions), \(cond) {
+      u_int   <- setNames(rnorm(length(categories_nonref), 0, sd_int),   categories_nonref)
+      u_slope <- setNames(rnorm(length(categories_nonref), 0, sd_slope), categories_nonref)
+      map_dfr(rep_nums, \(r) {
+        log_ratios <- alpha + beta * log(r) + u_int + u_slope * log(r)
+        all_logits <- c(NOUN = 0, log_ratios)
+        props <- exp(all_logits) / sum(exp(all_logits))
+        tibble(rep_num = r, draw = d, condition = cond, category = names(props), prop = props)
+      })
+    })
+  })
+}
+```
+
+```{r}
+# observed overall means per rep_num, for overlay
+obs_overall_pos <- pos_mod_log$data |>
+  filter(!is.na(total), total != 0) |>
+  mutate(rep_num = exp(log_rep_num)) |>
+  pivot_longer(c(NOUN, DET, FUNCTION, MODIFIER, PRON, VERB),
+               names_to = "category", values_to = "count") |>
+  mutate(prop = count / total) |>
+  group_by(rep_num, category) |>
+  summarize(mean_prop = mean(prop), .groups = "drop")
+
+# observed SD of condition-level means, for overlay
+obs_cond_spread <- pos_mod_log$data |>
+  filter(!is.na(total), total != 0) |>
+  mutate(rep_num = exp(log_rep_num)) |>
+  pivot_longer(c(NOUN, DET, FUNCTION, MODIFIER, PRON, VERB),
+               names_to = "category", values_to = "count") |>
+  mutate(prop = count / total) |>
+  group_by(rep_num, condition_id, category) |>
+  summarize(cond_mean = mean(prop), .groups = "drop") |>
+  group_by(rep_num, category) |>
+  summarize(sd_prop = sd(cond_mean), .groups = "drop")
+```
+
+```{r, fig.width=10, fig.height=5}
+# Fixed-effects prior predictive: does the prior allow NOUN to be as large as observed?
+prior_fixed <- prior_pred_fixed()
+
+ggplot(prior_fixed, aes(x = rep_num, y = prop, group = draw)) +
+  geom_line(alpha = 0.1, color = "steelblue") +
+  geom_line(data = obs_overall_pos, aes(x = rep_num, y = mean_prop, group = 1),
+            color = "black", lty = "dashed", linewidth = 1) +
+  facet_wrap(~category) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(title = "Prior predictive: fixed effects only (dashed = observed overall mean)",
+       y = "Proportion", x = "Repetition")
+```
+
+```{r, fig.width=10, fig.height=5}
+# Condition-level spread: does the prior allow as much variation across conditions
+# as we observe?
+prior_cond <- prior_pred_conditions()
+
+prior_cond_spread <- prior_cond |>
+  group_by(draw, rep_num, category) |>
+  summarize(sd_prop = sd(prop), .groups = "drop")
+
+ggplot(prior_cond_spread, aes(x = rep_num, y = sd_prop, group = draw)) +
+  geom_line(alpha = 0.15, color = "steelblue") +
+  geom_line(data = obs_cond_spread, aes(x = rep_num, y = sd_prop, group = 1),
+            color = "red", linewidth = 1.5) +
+  facet_wrap(~category) +
+  labs(title = "Prior predictive: condition spread (red = observed SD across conditions)",
+       y = "SD of condition means", x = "Repetition")
+```
+
+```{r}
 
   pos_pp_check <- function(mod, category, newdata) {
     preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
@@ -458,13 +571,64 @@ pos_pp_checks <- function(mod) {
                     )
     newdata_small <- mod$data |>
       filter(!is.na(total)) |>
-      filter(total!=0) |> 
+      filter(total!=0) |>
       group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
       slice_sample(n = 50) |>
       ungroup()
 
     lapply(setNames(categories, categories), \(cat) pos_pp_check(mod, cat, newdata_small))
   }
+
+pos_pp_check_overall <- function(mod, category, newdata) {
+  preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
+  cat_idx <- which(dimnames(preds)[[3]] == category)
+  if (length(cat_idx) == 0) {
+    stop("Category '", category, "' not found. Available: ",
+         paste(dimnames(preds)[[3]], collapse = ", "))
+  }
+
+  rep_vars <- intersect(c("rep_num", "log_rep_num", "inv_rep_num"), names(newdata))
+
+  obs <- newdata |>
+    mutate(prop = .data[[category]] / total) |>
+    group_by(across(all_of(rep_vars))) |>
+    summarize(mean_prop = mean(prop), .groups = "drop")
+
+  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
+    newdata |>
+      mutate(pred_prop = preds[draw, , cat_idx] / total) |>
+      group_by(across(all_of(rep_vars))) |>
+      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+      mutate(draw = draw)
+  ) |> list_rbind()
+
+  if ("log_rep_num" %in% rep_vars) {
+    pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
+    obs <- obs |> mutate(rep_num = exp(log_rep_num))
+  }
+  if ("inv_rep_num" %in% rep_vars) {
+    pred_lines <- pred_lines |> mutate(rep_num = -1 / inv_rep_num)
+    obs <- obs |> mutate(rep_num = -1 / inv_rep_num)
+  }
+
+  ggplot(pred_lines) +
+    geom_line(aes(x = rep_num, y = mean_prop, group = draw), alpha = 0.5, color = "steelblue") +
+    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
+    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
+    labs(title = category, y = "Mean proportion", x = "Repetition") +
+    coord_cartesian(ylim = c(0, 0.6))
+}
+
+pos_pp_checks_overall <- function(mod) {
+  categories <- c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON")
+  newdata_small <- mod$data |>
+    filter(!is.na(total), total != 0) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
+    slice_sample(n = 50) |>
+    ungroup()
+
+  lapply(setNames(categories, categories), \(cat) pos_pp_check_overall(mod, cat, newdata_small))
+}
 
 
 
@@ -519,18 +683,212 @@ plot_grid(log_posterior$NOUN, log_posterior$FUNCTION, log_posterior$VERB,
 ```{r, fig.width=10, fig.height=8}
 
 library(cowplot)
-plot_grid(log_posterior_2$NOUN, log_posterior_2$FUNCTION, log_posterior_2$VERB, 
+plot_grid(log_posterior_2$NOUN, log_posterior_2$FUNCTION, log_posterior_2$VERB,
           log_posterior_2$MODIFIER, log_posterior_2$DET, log_posterior_2$PRON)
+```
+
+```{r}
+log_overall <- pos_pp_checks_overall(pos_mod_log)
+log_overall_2 <- pos_pp_checks_overall(pos_mod_log_2)
+```
+
+```{r, fig.width=10, fig.height=5}
+plot_grid(log_overall$NOUN, log_overall$FUNCTION, log_overall$VERB,
+          log_overall$MODIFIER, log_overall$DET, log_overall$PRON)
+```
+
+```{r, fig.width=10, fig.height=5}
+plot_grid(log_overall_2$NOUN, log_overall_2$FUNCTION, log_overall_2$VERB,
+          log_overall_2$MODIFIER, log_overall_2$DET, log_overall_2$PRON)
+```
+
+```{r}
+# population-level only (re_formula=NA): if this also underestimates NOUN,
+# the problem is in the fixed-effect priors/estimation, not condition shrinkage
+pos_pp_check_poponly <- function(mod, category, newdata) {
+  preds <- posterior_epred(mod, newdata = newdata, ndraws = 10, re_formula = NA)
+  cat_idx <- which(dimnames(preds)[[3]] == category)
+  if (length(cat_idx) == 0) stop("Category not found: ", category)
+
+  rep_vars <- intersect(c("rep_num", "log_rep_num", "inv_rep_num"), names(newdata))
+
+  obs <- newdata |>
+    mutate(prop = .data[[category]] / total) |>
+    group_by(across(all_of(rep_vars))) |>
+    summarize(mean_prop = mean(prop), .groups = "drop")
+
+  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
+    newdata |>
+      mutate(pred_prop = preds[draw, , cat_idx] / total) |>
+      group_by(across(all_of(rep_vars))) |>
+      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+      mutate(draw = draw)
+  ) |> list_rbind()
+
+  if ("log_rep_num" %in% rep_vars) {
+    pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
+    obs <- obs |> mutate(rep_num = exp(log_rep_num))
+  }
+
+  ggplot(pred_lines) +
+    geom_line(aes(x = rep_num, y = mean_prop, group = draw), alpha = 0.5, color = "tomato") +
+    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
+    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
+    labs(title = paste(category, "(pop-level only)"), y = "Mean proportion", x = "Repetition") +
+    coord_cartesian(ylim = c(0, 0.6))
+}
+```
+
+```{r}
+newdata_log <- pos_mod_log$data |>
+  filter(!is.na(total), total != 0) |>
+  group_by(across(any_of(c("log_rep_num", "condition_id", "dataset_id")))) |>
+  slice_sample(n = 50) |>
+  ungroup()
+
+log_poponly <- lapply(
+  setNames(c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON"),
+           c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON")),
+  \(cat) pos_pp_check_poponly(pos_mod_log, cat, newdata_log)
+)
+```
+
+```{r, fig.width=10, fig.height=5}
+plot_grid(log_poponly$NOUN, log_poponly$FUNCTION, log_poponly$VERB,
+          log_poponly$MODIFIER, log_poponly$DET, log_poponly$PRON)
 ```
 
 
 
 ```{r}
-pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num) |> 
+pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num) |>
   pivot_longer(NOUN:PRON) |> ggplot(aes(x=log(rep_num), y=value/total))+stat_summary()+stat_summary(geom="line")+facet_wrap(~name)
 ```
 
+## take 2
 
+```{r}
+factor_pos <- read_rds(here(mod_loc, "pos_mod_factor.rds"))
+```
+
+```{r}
+summary(factor_pos)
+
+factor_posterior <- pos_pp_checks(factor_pos)
+factor_overall <- pos_pp_checks_overall(factor_pos)
+```
+
+
+```{r, fig.width=10, fig.height=8}
+
+library(cowplot)
+plot_grid(factor_posterior$NOUN, factor_posterior$FUNCTION, factor_posterior$VERB,
+          factor_posterior$MODIFIER, factor_posterior$DET, factor_posterior$PRON)
+```
+
+```{r, fig.width=10, fig.height=5}
+plot_grid(factor_overall$NOUN, factor_overall$FUNCTION, factor_overall$VERB,
+          factor_overall$MODIFIER, factor_overall$DET, factor_overall$PRON)
+```
+
+## Ordbeta POS models
+
+```{r}
+ordbeta_pp_check <- function(mod, category) {
+  prop_var <- paste0("prop_", category)
+
+  newdata_small <- mod$data |>
+    filter(!is.na(.data[[prop_var]])) |>
+    group_by(log_rep_num, condition_id) |>
+    slice_sample(n = 50) |>
+    ungroup()
+
+  preds <- posterior_epred(mod, newdata = newdata_small, ndraws = 10)
+  # preds is [ndraws, nobs] for ordbeta (not 3D like multinomial)
+
+  obs <- newdata_small |>
+    mutate(rep_num = exp(log_rep_num)) |>
+    group_by(rep_num, condition_id) |>
+    summarize(mean_prop = mean(.data[[prop_var]]), .groups = "drop")
+
+  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
+    newdata_small |>
+      mutate(
+        pred_prop = preds[draw, ],
+        rep_num = exp(log_rep_num)
+      ) |>
+      group_by(rep_num, condition_id) |>
+      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+      mutate(draw = draw)
+  ) |> list_rbind()
+
+  ggplot(data = pred_lines, aes(color = as.factor(condition_id))) +
+    geom_line(aes(x = rep_num, y = mean_prop, group = interaction(draw, condition_id)),
+              alpha = 0.5) +
+    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
+    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
+    labs(title = category, y = "Mean proportion", x = "Repetition") +
+    coord_cartesian(ylim = c(0, 0.6)) +
+    theme(legend.position = "none") +
+    facet_wrap(~ (as.numeric(condition_id) %% 5))
+}
+
+ordbeta_pp_check_overall <- function(mod, category) {
+  prop_var <- paste0("prop_", category)
+
+  newdata_small <- mod$data |>
+    filter(!is.na(.data[[prop_var]])) |>
+    group_by(log_rep_num, condition_id) |>
+    slice_sample(n = 50) |>
+    ungroup()
+
+  preds <- posterior_epred(mod, newdata = newdata_small, ndraws = 10)
+
+  obs <- newdata_small |>
+    mutate(rep_num = exp(log_rep_num)) |>
+    group_by(rep_num) |>
+    summarize(mean_prop = mean(.data[[prop_var]]), .groups = "drop")
+
+  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
+    newdata_small |>
+      mutate(pred_prop = preds[draw, ], rep_num = exp(log_rep_num)) |>
+      group_by(rep_num) |>
+      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+      mutate(draw = draw)
+  ) |> list_rbind()
+
+  ggplot(pred_lines) +
+    geom_line(aes(x = rep_num, y = mean_prop, group = draw), alpha = 0.5, color = "steelblue") +
+    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
+    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
+    labs(title = category, y = "Mean proportion", x = "Repetition") +
+    coord_cartesian(ylim = c(0, 0.6))
+}
+```
+
+```{r}
+ordbeta_categories <- c("NOUN", "VERB", "MODIFIER", "FUNCTION", "DET", "PRON")
+ordbeta_mods <- lapply(setNames(ordbeta_categories, ordbeta_categories), \(cat)
+  read_rds(here(mod_loc, paste0("pos_ordbeta_", cat, ".rds")))
+)
+ordbeta_posterior <- lapply(setNames(ordbeta_categories, ordbeta_categories), \(cat)
+  ordbeta_pp_check(ordbeta_mods[[cat]], cat)
+)
+ordbeta_overall <- lapply(setNames(ordbeta_categories, ordbeta_categories), \(cat)
+  ordbeta_pp_check_overall(ordbeta_mods[[cat]], cat)
+)
+```
+
+```{r, fig.width=10, fig.height=8}
+library(cowplot)
+plot_grid(ordbeta_posterior$NOUN, ordbeta_posterior$FUNCTION, ordbeta_posterior$VERB,
+          ordbeta_posterior$MODIFIER, ordbeta_posterior$DET, ordbeta_posterior$PRON)
+```
+
+```{r, fig.width=10, fig.height=5}
+plot_grid(ordbeta_overall$NOUN, ordbeta_overall$FUNCTION, ordbeta_overall$VERB,
+          ordbeta_overall$MODIFIER, ordbeta_overall$DET, ordbeta_overall$PRON)
+```
 
 
 
@@ -538,7 +896,7 @@ pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num
 
 ```{r}
 to_next_mod <- read_rds(here(mod_loc, "to_next_mod.rds"))
-#diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
+diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
 ```
 
 ```{r}

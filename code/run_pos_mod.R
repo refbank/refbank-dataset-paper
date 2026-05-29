@@ -17,9 +17,9 @@ options(
   brms.threads = threading(4)
 )
 
-p_beta_pos <- prior_string("normal(0,.5)", class = "b", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muPRON", "muVERB"))
-p_sd_pos <- prior_string("normal(0,.5)", class = "sd", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muPRON", "muVERB"))
-p_intercept_pos <- prior_string("normal(0, 1.5)", class = "Intercept", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muPRON", "muVERB"))
+p_beta_pos <- prior_string("normal(0,.5)", class = "b", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+p_sd_pos <- prior_string("normal(0,.5)", class = "sd", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+p_intercept_pos <- prior_string("normal(0, 1.5)", class = "Intercept", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
 
 logistic_pos_priors <- c(p_beta_pos, p_sd_pos, p_intercept_pos)
 
@@ -32,7 +32,7 @@ per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_d
 pos_mod <- brm(
   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ rep_num +
     (rep_num || dataset_id / condition_id),
-  family = multinomial(),
+  family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_mod.rds"),
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1)
@@ -41,7 +41,7 @@ pos_mod <- brm(
 pos_mod_log <- brm(
   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ log_rep_num +
     (log_rep_num || dataset_id / condition_id),
-  family = multinomial(),
+  family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_log_mod.rds"),
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1)
@@ -50,43 +50,43 @@ pos_mod_log <- brm(
 pos_mod_inv <- brm(
   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ inv_rep_num +
     (inv_rep_num || dataset_id / condition_id),
-  family = multinomial(),
+  family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_log_inv.rds"),
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
 )
 
-pos_mod_take_2 <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ rep_num +
-    (rep_num || condition_id),
-  family = multinomial(),
-  file = here("cached_model_files/mods/pos_mod_2.rds"),
-  prior = logistic_pos_priors,
-  data = per_describer_for_model |> filter(stage_num == 1)
-)
-
-pos_mod_log_take_2 <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ log_rep_num +
-    (log_rep_num || condition_id),
-  family = multinomial(),
-  file = here("cached_model_files/mods/pos_log_mod_2.rds"),
-  prior = logistic_pos_priors,
-  data = per_describer_for_model |> filter(stage_num == 1)
-)
-
-pos_mod_inv_take_2 <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ inv_rep_num +
-    (inv_rep_num || condition_id),
-  family = multinomial(),
-  file = here("cached_model_files/mods/pos_log_inv_2.rds"),
-  prior = logistic_pos_priors,
-  data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
-)
+# pos_mod_take_2 <- brm(
+#   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ rep_num +
+#     (rep_num || condition_id),
+#   family = multinomial(refcat="PRON"),
+#   file = here("cached_model_files/mods/pos_mod_2.rds"),
+#   prior = logistic_pos_priors,
+#   data = per_describer_for_model |> filter(stage_num == 1)
+# )
+#
+# pos_mod_log_take_2 <- brm(
+#   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ log_rep_num +
+#     (log_rep_num || condition_id),
+#   family = multinomial(refcat="PRON"),
+#   file = here("cached_model_files/mods/pos_log_mod_2.rds"),
+#   prior = logistic_pos_priors,
+#   data = per_describer_for_model |> filter(stage_num == 1)
+# )
+#
+# pos_mod_inv_take_2 <- brm(
+#   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ inv_rep_num +
+#     (inv_rep_num || condition_id),
+#   family = multinomial(refcat="PRON"),
+#   file = here("cached_model_files/mods/pos_log_inv_2.rds"),
+#   prior = logistic_pos_priors,
+#   data = per_describer_for_model |> filter(stage_num == 1) |> mutate(inv_rep_num = -1 / rep_num)
+# )
 
 pos_mod_factor <- brm(
   cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ as.factor(rep_num) +
     (as.factor(rep_num) || condition_id),
-  family = multinomial(),
+  family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_mod_factor.rds"),
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1)
