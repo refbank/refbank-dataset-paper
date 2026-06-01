@@ -92,8 +92,8 @@ pos_mod_factor <- brm(
   data = per_describer_for_model |> filter(stage_num == 1)
 )
 
-p_beta_ordbeta <- prior_string("normal(0, 0.5)", class = "b")
-p_sd_ordbeta <- prior_string("normal(0, 0.5)", class = "sd")
+p_beta_ordbeta <- prior_string("normal(0, 1.5)", class = "b")
+p_sd_ordbeta <- prior_string("normal(0, 1.5)", class = "sd")
 p_intercept_ordbeta <- prior_string("normal(0, 1.5)", class = "Intercept")
 ordbeta_priors <- c(p_intercept_ordbeta, p_beta_ordbeta, p_sd_ordbeta)
 
