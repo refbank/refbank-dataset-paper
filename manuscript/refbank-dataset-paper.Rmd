@@ -839,7 +839,7 @@ ordbeta_pp_check_overall <- function(mod, category) {
   newdata_small <- mod$data |>
     filter(!is.na(.data[[prop_var]])) |>
     group_by(log_rep_num, condition_id) |>
-    slice_sample(n = 50) |>
+    slice_sample(n = 500) |>
     ungroup()
 
   preds <- posterior_epred(mod, newdata = newdata_small, ndraws = 10)
@@ -890,7 +890,41 @@ plot_grid(ordbeta_overall$NOUN, ordbeta_overall$FUNCTION, ordbeta_overall$VERB,
           ordbeta_overall$MODIFIER, ordbeta_overall$DET, ordbeta_overall$PRON)
 ```
 
+## Ord beta different priors
 
+```{r}
+preds <- per_describer_for_model |> 
+  select(rep_num, dataset_id, condition_id) |> 
+  mutate(log_rep_num = log(rep_num),
+         total = 1) |> 
+  distinct()
+
+pr_log <- predict(pos_mod_log, newdata = preds)
+
+preds_out <- preds |> 
+  cbind(pr_log) |> 
+  select(rep_num, dataset_id, condition_id, starts_with("Estimate.")) |> 
+  rename_with(\(x) str_remove(x, "^Estimate.")) |> 
+  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
+               names_to = "pos",
+               values_to = "prop")
+```
+
+
+```{r, fig.width=10, fig.height=8}
+per_describer_for_model |> 
+  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
+               names_to = "pos",
+               values_to = "count") |> 
+  mutate(prop = count / total) |> 
+  ggplot(aes(x = rep_num, y = prop, col = condition_id)) +
+  stat_summary(fun.data = mean_cl_boot) +
+  # geom_smooth(method = "lm", formula = y ~ log(x)) +
+  # geom_smooth(method = "glm", method.args = list(family = "quasibinomial")) +
+  geom_line(data = preds_out) +
+  facet_grid(pos ~ (as.numeric(condition_id) %% 5)) +
+  theme(legend.position = "none")
+```
 
 ## SBERT
 

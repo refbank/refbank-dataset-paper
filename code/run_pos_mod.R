@@ -17,8 +17,8 @@ options(
   brms.threads = threading(4)
 )
 
-p_beta_pos <- prior_string("normal(0,.5)", class = "b", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
-p_sd_pos <- prior_string("normal(0,.5)", class = "sd", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+p_beta_pos <- prior_string("normal(0,1.5)", class = "b", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+p_sd_pos <- prior_string("normal(0,1.5)", class = "sd", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
 p_intercept_pos <- prior_string("normal(0, 1.5)", class = "Intercept", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
 
 logistic_pos_priors <- c(p_beta_pos, p_sd_pos, p_intercept_pos)
