@@ -30,7 +30,7 @@ per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_d
   )
 
 pos_mod <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ rep_num +
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | total ~ rep_num +
     (rep_num || dataset_id / condition_id),
   family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_mod.rds"),
@@ -39,7 +39,7 @@ pos_mod <- brm(
 )
 
 pos_mod_log <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ log_rep_num +
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | total ~ log_rep_num +
     (log_rep_num || dataset_id / condition_id),
   family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_log_mod.rds"),
@@ -48,7 +48,7 @@ pos_mod_log <- brm(
 )
 
 pos_mod_inv <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ inv_rep_num +
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | total ~ inv_rep_num +
     (inv_rep_num || dataset_id / condition_id),
   family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_log_inv.rds"),
@@ -84,7 +84,7 @@ pos_mod_inv <- brm(
 # )
 
 pos_mod_factor <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) ~ as.factor(rep_num) +
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | total ~ as.factor(rep_num) +
     (as.factor(rep_num) || condition_id),
   family = multinomial(refcat = "PRON"),
   file = here("cached_model_files/mods/pos_mod_factor.rds"),
