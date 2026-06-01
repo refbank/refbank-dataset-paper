@@ -639,9 +639,9 @@ inv_posterior <- pos_pp_checks(pos_mod_inv)
 lin_posterior <- pos_pp_checks(pos_mod)
 log_posterior <- pos_pp_checks(pos_mod_log)
 
-inv_posterior_2 <- pos_pp_checks(pos_mod_inv_2)
-lin_posterior_2 <- pos_pp_checks(pos_mod_2)
-log_posterior_2 <- pos_pp_checks(pos_mod_log_2)
+#inv_posterior_2 <- pos_pp_checks(pos_mod_inv_2)
+#lin_posterior_2 <- pos_pp_checks(pos_mod_2)
+#log_posterior_2 <- pos_pp_checks(pos_mod_log_2)
 
 ```
 
@@ -706,7 +706,7 @@ plot_grid(log_overall_2$NOUN, log_overall_2$FUNCTION, log_overall_2$VERB,
 # population-level only (re_formula=NA): if this also underestimates NOUN,
 # the problem is in the fixed-effect priors/estimation, not condition shrinkage
 pos_pp_check_poponly <- function(mod, category, newdata) {
-  preds <- posterior_epred(mod, newdata = newdata, ndraws = 10, re_formula = NA)
+  preds <- posterior_epred(mod, newdata = newdata, ndraws = 20, re_formula = NA)
   cat_idx <- which(dimnames(preds)[[3]] == category)
   if (length(cat_idx) == 0) stop("Category not found: ", category)
 
