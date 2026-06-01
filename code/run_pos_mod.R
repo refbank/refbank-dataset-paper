@@ -28,7 +28,8 @@ per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_d
     condition_id = as.factor(condition_id),
     total = NOUN + VERB + MODIFIER + FUNCTION + DET + PRON,
     w = 1 / total
-  )
+  ) |>
+  filter(total != 0)
 
 
 pos_mod <- brm(
