@@ -8,7 +8,8 @@ options(
   mc.cores = 4, # parallel::detectCores(),
   brms.cores = 4, # parallel::detectCores(),
   brms.iter = 4000,
-  brms.chains = 4
+  brms.chains = 4,
+  control = list(adapt_delta = 0.99)
 )
 # take the fitted reduction models
 # and create data for a slope predicting secondary model
@@ -21,19 +22,26 @@ log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
 
 log_log_preds <- coef(log_log_mod)$`dataset_id:condition_id` |>
   as_tibble(rownames = "dataset_cond") |>
-  select(dataset_cond, slope = Estimate.log_rep_num) |>
+  select(dataset_cond,
+    slope = Estimate.log_rep_num,
+    se = Est.Error.log_rep_num
+  ) |>
   left_join(condition_info)
 
 log_lin_preds <- coef(log_lin_mod)$`dataset_id:condition_id` |>
   as_tibble(rownames = "dataset_cond") |>
-  select(dataset_cond, slope = Estimate.rep_num) |>
+  select(dataset_cond, slope = Estimate.rep_num, se = Est.Error.rep_num) |>
   left_join(condition_info)
 
 
-p_beta_linear <- prior_string("normal(0,.2)", class = "b") # seems fine?
+p_beta_linear <- c(
+  prior_string("normal(0, .2)", class = "b"),
+  prior_string("normal(0, .2)", class = "Intercept"),
+  prior_string("normal(0, .2)", class = "sigma", lb = 0)
+)
 
 log_lin_pred_mod <- brm(
-  slope ~ n_players +
+  slope | mi(se) ~ n_players +
     # option_size +
     # image_type +
     # partner_constancy +
@@ -48,7 +56,7 @@ log_lin_pred_mod <- brm(
 )
 
 log_log_pred_mod <- brm(
-  slope ~ n_players +
+  slope | mi(se) ~ n_players +
     # option_size +
     # image_type +
     # partner_constancy +

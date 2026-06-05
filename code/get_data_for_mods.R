@@ -12,6 +12,7 @@ conditions <- get_conditions(datasets = favorite_datasets, version = version)
 trials <- get_trials(datasets = favorite_datasets, version = version)
 images <- get_images(datasets = favorite_datasets, version = version)
 messages <- get_messages(datasets = favorite_datasets, version = version)
+choices <- get_choices(datasets = favorite_datasets, version = version)
 pos <- get_annotated_messages(datasets = favorite_datasets, version = version)
 sbert <- get_cosine_similarities(datasets = favorite_datasets, sim_type = c("to_next", "diverge"), version = version)
 
@@ -69,6 +70,16 @@ valid_games <- valid_trials |>
   select(game_id, dataset_id, condition_id)
 
 valid_trials_games <- valid_trials |> inner_join(valid_games)
+
+
+accuracy <- valid_trials_games |>
+  left_join(choices) |>
+  filter(!is.na(choice_id) & choice_id != "timed_out") |>
+  mutate(correct = ifelse(choice_id == target, 1, 0)) |>
+  select(correct, trial_id, dataset_id, rep_num, stage_num, condition_id, option_size) |>
+  left_join(condition_info) |>
+  mutate(log_rep_num = log(rep_num)) |>
+  saveRDS("cached_model_files/data_for_mods/per_matcher_for_model.rds")
 
 words <- messages |>
   inner_join(valid_trials_games) |>

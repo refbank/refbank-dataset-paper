@@ -2,6 +2,7 @@
 title             : |
   | Refbank the dataset the paper
 shorttitle: Refbank
+toc : TRUE
 author: 
   - name          : "Veronica Boyce"
     affiliation   : "1,2"
@@ -27,7 +28,6 @@ authornote: |
 abstract: |
   REFBANK TODO
   
-
 keywords          : TODO
 wordcount         : TODO
 
@@ -44,18 +44,17 @@ footnotelist      : no
 
 classoption       : "man"
 csl               : apa7.csl
-output            : papaja::apa6_pdf
+#output            :  #papaja::apa6_pdf
 header-includes   :
   - \usepackage{setspace}\singlespacing
   - \setlength{\parskip}{0pt}
 ---
 
 ```{r setup, include = FALSE}
-
 knitr::opts_chunk$set(
-  fig.width = 3, fig.height = 3, fig.crop = F,
+  fig.width = 6, fig.height = 3, fig.crop = F,
   fig.pos = "tb", fig.path = "figs/",
-  echo = F, warning = F, cache = F,
+  echo = F, warning = F, cache = T,
   message = F, sanitize = T
 )
 
@@ -66,6 +65,7 @@ library(rstan)
 library(rstanarm)
 library(ggthemes)
 library(kableExtra)
+library(tidybayes)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 theme_set(theme_bw())
@@ -86,9 +86,9 @@ stats <- function(model, row, decimal = 2) {
 stats_text <- function(model, row, decimal = 2) {
   model <- model |>
     mutate(
-      Estimate = round(Estimate, digits = decimal) |> formatC(format='f', digits=decimal ),
-      Lower = round(lower, digits = decimal) |> formatC(format='f', digits=decimal ),
-      Upper = round(upper, digits = decimal) |> formatC(format='f', digits=decimal ),
+      Estimate = round(Estimate, digits = decimal) |> formatC(format = "f", digits = decimal),
+      Lower = round(lower, digits = decimal) |> formatC(format = "f", digits = decimal),
+      Upper = round(upper, digits = decimal) |> formatC(format = "f", digits = decimal),
       `Credible Interval` = str_c("[", Lower, ", ", Upper, "]")
     ) |>
     select(Term, Estimate, `Credible Interval`)
@@ -98,7 +98,7 @@ stats_text <- function(model, row, decimal = 2) {
 form <- function(model_form) {
   dep <- as.character(model_form$formula[2])
   ind <- as.character(model_form$formula[3])
-  
+
   str_c(dep, " ~ ", ind) |>
     str_replace_all(" ", "") |>
     str_replace_all("\\*", " $\\\\times$ ") |>
@@ -108,23 +108,28 @@ form <- function(model_form) {
 
 mod_loc <- "cached_model_files/mods"
 
-do_preds <- function(model){
-  mod <- here(model_loc,model) |> read_rds()
-  preds <- expand_grid(rep=1:6) |> 
-    add_linpred_draws(mod, value="predicted", re_formula=NA) |> 
-    group_by(rep) |> 
-    summarize(mean=mean(predicted),
-              low=quantile(predicted,.025),
-              high=quantile(predicted,.975))
+do_preds <- function(model) {
+  mod <- here(model_loc, model) |> read_rds()
+  preds <- expand_grid(rep = 1:6) |>
+    add_linpred_draws(mod, value = "predicted", re_formula = NA) |>
+    group_by(rep) |>
+    summarize(
+      mean = mean(predicted),
+      low = quantile(predicted, .025),
+      high = quantile(predicted, .975)
+    )
   return(preds)
 }
 
-smol_data <- function(mod){
-  mod$data |> group_by(across(any_of(c("rep_num", "log_rep_num", "dataset_id", "condition_id")))) |> slice_sample(n=50) |> ungroup()
+smol_data <- function(mod) {
+  mod$data |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "dataset_id", "condition_id")))) |>
+    slice_sample(n = 50) |>
+    ungroup()
 }
 ```
 
-
+This is currently an outline / pilot analysis with posterior predictive checks.
 
 # Intro
 
@@ -178,148 +183,243 @@ Shiny app / API / redivis versioning etc
 ```
 
 
-(basically the tabs and graphs we have for shiny)
+Note: As a pilot to make sure we got the model specifications right (and that the models would run) we tested these on boyce2024 & hawkins2020. 
 
-
-
+All of these analyses are run only on "stage 1" data
 
 ## Reduction
 
-### Main effect of rep num 
-(on stage 1 only)
-log words ~ (log?) rep_num + (rep_num | paper / condition)
-try the different functional form options & report best fit b/c this is relevant (see also power-law claiming paper)
+<!-- ### Main effect of rep num  -->
 
-* power law: log - log 
-* log-linear: log words ~ rep_num
-* linear-log: words ~ log(rep)
-* linear as baseline 
+There's a question of what the correct functional form is for the words ~ rep_num relationship. We fit 4 options -- the full 2x2 of log or raw words x log or raw rep num. 
 
 
+```
+p_beta <- prior_string("normal(0,.5)", class = "b")
+p_sd <- prior_string("normal(0,.5)", class = "sd")
+
+p_intercept_logscale <- prior_string("normal(2,.5)", class = "Intercept")
+p_intercept_linear <- prior_string("normal(10,10)", class = "Intercept")
+p_beta_linear <- prior_string("normal(0,5)", class = "b")
+p_sd_linear <- prior_string("normal(0,5)", class = "sd")
+
+log_dv_priors <- c(p_intercept_logscale, p_beta, p_sd)
+linear_dv_priors <- c(p_intercept_linear, p_beta_linear, p_sd_linear)
+
+red_mod_log_log <- brm(log_words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
+  prior = log_dv_priors)
+
+red_mod_log_lin <- brm(log_words ~ rep_num + (rep_num || dataset_id / condition_id),
+  prior = log_dv_priors
+)
+
+red_mod_lin_log <- brm(words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
+  prior = linear_dv_priors
+)
+
+red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
+  prior = linear_dv_priors
+)
+```
 
 ```{r}
 log_log_mod <- read_rds(here(mod_loc, "red_mod_log_log.rds"))
 log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
 lin_lin_mod <- read_rds(here(mod_loc, "red_mod_lin_lin.rds"))
 lin_log_mod <- read_rds(here(mod_loc, "red_mod_lin_log.rds"))
-
 ```
 
 ```{r}
-do_pp_checks <- function(mod, group, dv){
-  lil_data <- smol_data(mod)
-   a <- pp_check(mod, type = "dens_overlay", ndraws = 10, newdata=lil_data)
-   b <-  pp_check(mod, type = "stat_grouped", stat = "mean", group = group, ndraws=10, newdata=lil_data)
+scalar_pp_check <- function(mod, ndraws = 10) {
+  dv <- all.vars(formula(mod)$formula)[1]
 
-    c <-   pp_check(mod, type = "stat_grouped", stat = "sd", group = group, ndraws=10, newdata=lil_data)
-    d <-     pp_check(mod, type = "scatter_avg", ndraws=10, new_data=lil_data)
-   if(dv=="log"){
-     b <- b+coord_cartesian(xlim=c(0,6))
-     c <- c+coord_cartesian(xlim=c(0,6))
-   }
-    if(dv=="lin"){
-     b <- b+coord_cartesian(xlim=c(0,50))
-     c <- c+coord_cartesian(xlim=c(0,50))
-    }
-    if(dv=="sim"){
-     b <- b+coord_cartesian(xlim=c(0,1))
-     c <- c+coord_cartesian(xlim=c(0,1))
-   }
-list(a,b,c,d)
+  newdata_small <- mod$data |>
+    filter(!is.na(.data[[dv]])) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
+    ungroup()
+
+  obs <- newdata_small |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
+    summarize(mean_val = mean(.data[[dv]]), .groups = "drop")
+
+  pred_summary <- newdata_small |>
+    add_epred_draws(mod, ndraws = ndraws) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".draw")))) |>
+    summarize(mean_pred = mean(.epred), .groups = "drop")
+
+  if ("log_rep_num" %in% names(newdata_small) && !"rep_num" %in% names(newdata_small)) {
+    pred_summary <- pred_summary |> mutate(rep_num = exp(log_rep_num))
+    obs <- obs |> mutate(rep_num = exp(log_rep_num))
+  }
+
+  ggplot() +
+    geom_line(
+      data = pred_summary,
+      aes(
+        x = rep_num, y = mean_pred,
+        group = interaction(.draw, condition_id),
+        color = as.factor(condition_id)
+      ),
+      alpha = 0.5
+    ) +
+    geom_line(
+      data = obs,
+      aes(x = rep_num, y = mean_val, color = as.factor(condition_id)),
+      lty = "dashed"
+    ) +
+    geom_point(
+      data = obs,
+      aes(x = rep_num, y = mean_val, color = as.factor(condition_id))
+    ) +
+    facet_grid(.~ (as.numeric(condition_id) %% 5)) +
+    theme(legend.position = "none") +
+    labs(y = dv, x = "Repetition")
 }
 ```
 
-```{r}
-summary(log_log_mod)
+### Log-log
 
-do_pp_checks(log_log_mod, "log_rep_num", "log")
-  
+Note: here and elsewhere, the panels and colors are just different conditions. We want to make sure that the random effects can capture condition differences, and we spread them across panels for viewability. 
+
+```{r}
+scalar_pp_check(log_log_mod)
 
 pp_check(log_log_mod)
 ```
 
 
-```{r}
-summary(log_lin_mod)
+note that log words the actual data is spikey because number of words is discrete, so it can be 0 or log(2) or etc, but not in between. 
 
-do_pp_checks(log_lin_mod, "rep_num", "log")
+### Log-lin
+
+```{r}
+scalar_pp_check(log_lin_mod)
+
+pp_check(log_log_mod)
+```
+
+### Lin-log
+
+```{r}
+scalar_pp_check(lin_log_mod)
+
+pp_check(lin_log_mod)
+```
+
+### Lin-lin
+
+```{r}
+scalar_pp_check(lin_lin_mod)
+pp_check(lin_log_mod)
+```
+
+### Loo
+```{r}
+loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
+loo_log_lin <- readRDS(here(mod_loc, "loo_log_lin.rds"))
+loo_lin_log <- readRDS(here(mod_loc, "loo_lin_log.rds"))
+loo_lin_lin <- readRDS(here(mod_loc, "loo_lin_lin.rds"))
+loo_log_log_orig <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
+loo_log_lin_orig <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
 ```
 
 
 ```{r}
-summary(lin_log_mod)
+loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> print(simplify = F)
 
-do_pp_checks(lin_log_mod, "log_rep_num", "lin")
+loo_compare(list(log_log = loo_log_log, log_lin = loo_log_lin))
 ```
 
+```{r,eval=F}
+pred_log_log <- predict(log_log_mod)
 
-```{r}
-summary(lin_lin_mod)
-
-do_pp_checks(lin_lin_mod, "rep_num", "lin")
-
-```
-
-
-```{r}
-loo_log_log        <- readRDS(here(mod_loc, "loo_log_log.rds"))
-  loo_log_lin        <- readRDS(here(mod_loc, "loo_log_lin.rds"))
-  loo_lin_log        <- readRDS(here(mod_loc, "loo_lin_log.rds"))
-  loo_lin_lin        <- readRDS(here(mod_loc, "loo_lin_lin.rds"))
-  loo_log_log_orig   <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
-  loo_log_lin_orig   <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
-
-```
-
-
-```{r}
-
-loo_compare(list(log_log = loo_log_log_orig, log_lin=loo_log_lin_orig,lin_log= loo_lin_log, lin_lin=loo_lin_lin)) |> print(simplify=F)
-
-loo_compare(list(log_log=loo_log_log, log_lin = loo_log_lin))
-```
-
-```{r}
-pred_log_log = predict(log_log_mod)
-
-pred_log_lin = predict(log_lin_mod)
+pred_log_lin <- predict(log_lin_mod)
 
 mean(abs(pred_log_log - pred_log_lin))
+```
 
 
+Log words fits way better, and seems right -- whether it's a lot or power law relationship is hard to tell. 
+
+## Reduction Moderators
+
+Two possible approaches to moderators. 
+
+1. take the (well-performing) above models (log-log and log-lin), then predict the slopes for each condition based on all the predictor variables (runs fast)
+
+```{r, echo=T, eval=F}
+p_beta_linear <- prior_string("normal(0,.2)", class = "b")
+
+log_lin_pred_mod <- brm(
+  slope ~ n_players +
+    # option_size +
+    # image_type +
+    # partner_constancy +
+    role_constancy +
+    # population +
+    # modality +
+    feedback +
+    backchannel,
+  prior = c(p_beta_linear),
+  data = log_lin_preds
+)
+```
+(and same for log-log model)
+
+For the full model, we'd have all the predictors, but we don't have variation on many of them with just the two pilot datasets. 
+
+2. Run full models with groups of predictors
+
+(and same for log-lin relationship)
+For the full model, we'd have all the predictors and all three models, but we don't have variation on many of them with just the two pilot datasets. 
+
+```{r, echo=T, eval=F}
+p_intercept_logscale <- prior_string("normal(2,.5)", class = "Intercept")
+p_intercept_linear <- prior_string("normal(10,10)", class = "Intercept")
+p_beta_linear <- prior_string("normal(0,5)", class = "b")
+p_sd_linear <- prior_string("normal(0,5)", class = "sd")
+
+log_dv_priors <- c(p_intercept_logscale, p_beta, p_sd)
+linear_dv_priors <- c(p_intercept_linear, p_beta_linear, p_sd_linear)
+
+red_mod_log_log_participants <- brm(
+  log_words ~ log_rep_num *
+    # population*
+    n_players + (log_rep_num || dataset_id / condition_id),
+  prior = log_dv_priors,
+)
+
+# not run because no variation in pilot set
+red_mod_log_log_images <- brm(
+  log_words ~ log_rep_num * (option_size + image_type) +
+    (log_rep_num || dataset_id / condition_id),
+  prior = log_dv_priors,
+)
+
+red_mod_log_log_channel <- brm(
+  log_words ~ log_rep_num * (role_constancy +
+    # modality+
+    feedback + backchannel) +
+    (log_rep_num || dataset_id / condition_id),
+  prior = log_dv_priors,
+)
 ```
 
 
 
-## Moderators
-
-Two possible approaches to moderators
-
-1. take the first models, then predict the slopes for each condition based on all the predictor variables (runs fast )
-
-2. run full models with groups of predictors
-
-
-### Approach 1
-
-```{r}
-
+```{r, eval=F}
 log_lin_pred <- read_rds(here(mod_loc, "log_lin_pred.rds"))
 
 log_log_pred <- read_rds(here(mod_loc, "log_log_pred.rds"))
 ```
 
-```{r}
+```{r, eval=F}
 summary(log_lin_pred)
 
 summary(log_log_pred)
 ```
 
-
-### Approach 2
-
-```{r}
-
+```{r, eval=F}
 participants_log_log <- read_rds(here(mod_loc, "red_mod_log_log_participants.rds"))
 
 participants_log_lin <- read_rds(here(mod_loc, "red_mod_log_lin_participants.rds"))
@@ -328,21 +428,18 @@ channel_log_log <- read_rds(here(mod_loc, "red_mod_log_log_channel.rds"))
 
 
 channel_log_lin <- read_rds(here(mod_loc, "red_mod_log_lin_channel.rds"))
-
 ```
 
-```{r}
+```{r, eval=F}
 summary(participants_log_log)
 
 summary(participants_log_lin)
-
 ```
 
-```{r}
+```{r, eval=F}
 summary(channel_log_log)
 
 summary(channel_log_lin)
-
 ```
 
 
@@ -350,6 +447,7 @@ summary(channel_log_lin)
 n-players, age-group (on stage 1 only, using n-players who are active at this point)
 
 So, comparing for n-players 
+
 * log-log slope model: -.01 (-.06 - .04 )
 * log-lin slope model: -.01 (-.02 - .01 )
 * log-log full model: -.01 (-.04 - .02 )
@@ -358,21 +456,24 @@ So, comparing for n-players
 pilot samples doesn't have age-group variation 
 
 ### Moderation by expt design / communication channel
-thickness, modality (can maybe break up feedback / backchannel / role rotation?)
+thickness, modality 
 
 For role-constancy (yes):
+
 * log-log slope model: -.03 (-.23 - .18)
 * log-lin slope model: .00 (-.08 - .09)
 * log-log full model: -.05 (-.31 - .18)
 * log-lin full model: 0.00 (-.09 - .09)
 
 For feedback (limited):
+
 * log-log slope model: .01 (-.19 - .21)
 * log-lin slope model: -.01 (-.09 - .08)
 * log-log full model: -.05 (-.30 - .20)
 * log-lin full model: -.01 (-.10 - .08)
 
 For backchannel (limited):
+
 * log-log slope model: .31 (.08 - .50)
 * log-lin slope model: .14 (.06 - .21)
 * log-log full model: .38 (.15 - .60)
@@ -383,208 +484,113 @@ type of stims x n targets
 
 no variation to compare in this set
 
+### So which to choose?
+
+Estimates between slope and full model with the same functional form are quite consistent -- so which one should we use?
 
 ## PoS
 
-```{r}
-pos_mod <- read_rds(here(mod_loc, "pos_mod.rds"))
+We have PoS data for all monolingual corpora.
 
+After much model wrangling, Alvin and I got multinomial models for PoS working. 
+
+The best functional form relationship is using log(rep_num)
+
+```{r, echo=T, eval=F}
+p_beta_pos <- prior_string("normal(0,1.5)", class = "b", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+p_sd_pos <- prior_string("normal(0,1.5)", class = "sd", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+p_intercept_pos <- prior_string("normal(0, 1.5)", class = "Intercept", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
+
+logistic_pos_priors <- c(p_beta_pos, p_sd_pos, p_intercept_pos)
+
+per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_describer_for_model.rds")) |>
+  mutate(
+    condition_id = as.factor(condition_id),
+    total = NOUN + VERB + MODIFIER + FUNCTION + DET + PRON,
+    w = 1 / total
+  ) |>
+  filter(total != 0)
+
+pos_mod_log <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) + weights(w) ~ log_rep_num +
+    (log_rep_num || dataset_id / condition_id),
+  family = multinomial(refcat = "PRON"),
+  prior = logistic_pos_priors,
+)
+```
+
+```{r}
 pos_mod_log <- read_rds(here(mod_loc, "pos_log_mod.rds"))
-
-pos_mod_inv <- read_rds(here(mod_loc, "pos_log_inv.rds"))
-
-pos_mod_2 <- read_rds(here(mod_loc, "pos_mod_2.rds"))
-
-pos_mod_log_2 <- read_rds(here(mod_loc, "pos_log_mod_2.rds"))
-
-pos_mod_inv_2 <- read_rds(here(mod_loc, "pos_log_inv_2.rds"))
 ```
 
 ```{r}
-summary(pos_mod)
+pos_pp_check <- function(mod, category, newdata) {
+  preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
+  # preds is [ndraws, nobs, ncategories]
+  cat_idx <- which(dimnames(preds)[[3]] == category)
+  if (length(cat_idx) == 0) {
+    stop(
+      "Category '", category, "' not found. Available: ",
+      paste(dimnames(preds)[[3]], collapse = ", ")
+    )
+  }
 
-summary(pos_mod_log)
+  obs <- newdata |>
+    mutate(prop = .data[[category]] / total) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
+    summarize(mean_prop = mean(prop))
 
-summary(pos_mod_inv)
-```
-
-```{r}
-prior_summary(pos_mod_log)
-```
-
-```{r}
-VarCorr(pos_mod_log)
-VarCorr(pos_mod_log_2)
-```
-
-```{r}
-# Prior predictive check: sample directly from the priors to see what range of
-# outcomes they allow before looking at data.
-#
-# Two questions:
-#  1. Fixed effects only: does the prior allow NOUN to be as dominant as observed?
-#  2. With condition random effects: does the prior allow as much condition spread
-#     as observed?
-#
-# NOUN is the reference category in the multinomial; all others are modelled on
-# the log-ratio scale relative to NOUN. Priors: intercepts normal(0,1.5),
-# slopes normal(0,0.5), random effect SDs normal+(0,0.5).
-
-categories_nonref <- c("DET", "FUNCTION", "MODIFIER", "NOUN", "VERB")
-
-prior_pred_fixed <- function(n_draws = 200, rep_nums = 1:6) {
-  map_dfr(seq_len(n_draws), \(d) {
-    alpha <- setNames(rnorm(length(categories_nonref), 0, 1.5), categories_nonref)
-    beta  <- setNames(rnorm(length(categories_nonref), 0, 0.5), categories_nonref)
-    map_dfr(rep_nums, \(r) {
-      log_ratios <- alpha + beta * log(r)
-      all_logits <- c(PRON = 0, log_ratios)
-      props <- exp(all_logits) / sum(exp(all_logits))
-      tibble(rep_num = r, draw = d, category = names(props), prop = props)
-    })
-  })
-}
-
-prior_pred_conditions <- function(n_draws = 50, n_conditions = 30, rep_nums = 1:6) {
-  map_dfr(seq_len(n_draws), \(d) {
-    alpha    <- setNames(rnorm(length(categories_nonref), 0, 1.5), categories_nonref)
-    beta     <- setNames(rnorm(length(categories_nonref), 0, 0.5), categories_nonref)
-    sd_int   <- abs(rnorm(1, 0, 0.5))
-    sd_slope <- abs(rnorm(1, 0, 0.5))
-    map_dfr(seq_len(n_conditions), \(cond) {
-      u_int   <- setNames(rnorm(length(categories_nonref), 0, sd_int),   categories_nonref)
-      u_slope <- setNames(rnorm(length(categories_nonref), 0, sd_slope), categories_nonref)
-      map_dfr(rep_nums, \(r) {
-        log_ratios <- alpha + beta * log(r) + u_int + u_slope * log(r)
-        all_logits <- c(NOUN = 0, log_ratios)
-        props <- exp(all_logits) / sum(exp(all_logits))
-        tibble(rep_num = r, draw = d, condition = cond, category = names(props), prop = props)
-      })
-    })
-  })
-}
-```
-
-```{r}
-# observed overall means per rep_num, for overlay
-obs_overall_pos <- pos_mod_log$data |>
-  filter(!is.na(total), total != 0) |>
-  mutate(rep_num = exp(log_rep_num)) |>
-  pivot_longer(c(NOUN, DET, FUNCTION, MODIFIER, PRON, VERB),
-               names_to = "category", values_to = "count") |>
-  mutate(prop = count / total) |>
-  group_by(rep_num, category) |>
-  summarize(mean_prop = mean(prop), .groups = "drop")
-
-# observed SD of condition-level means, for overlay
-obs_cond_spread <- pos_mod_log$data |>
-  filter(!is.na(total), total != 0) |>
-  mutate(rep_num = exp(log_rep_num)) |>
-  pivot_longer(c(NOUN, DET, FUNCTION, MODIFIER, PRON, VERB),
-               names_to = "category", values_to = "count") |>
-  mutate(prop = count / total) |>
-  group_by(rep_num, condition_id, category) |>
-  summarize(cond_mean = mean(prop), .groups = "drop") |>
-  group_by(rep_num, category) |>
-  summarize(sd_prop = sd(cond_mean), .groups = "drop")
-```
-
-```{r, fig.width=10, fig.height=5}
-# Fixed-effects prior predictive: does the prior allow NOUN to be as large as observed?
-prior_fixed <- prior_pred_fixed()
-
-ggplot(prior_fixed, aes(x = rep_num, y = prop, group = draw)) +
-  geom_line(alpha = 0.1, color = "steelblue") +
-  geom_line(data = obs_overall_pos, aes(x = rep_num, y = mean_prop, group = 1),
-            color = "black", lty = "dashed", linewidth = 1) +
-  facet_wrap(~category) +
-  coord_cartesian(ylim = c(0, 1)) +
-  labs(title = "Prior predictive: fixed effects only (dashed = observed overall mean)",
-       y = "Proportion", x = "Repetition")
-```
-
-```{r, fig.width=10, fig.height=5}
-# Condition-level spread: does the prior allow as much variation across conditions
-# as we observe?
-prior_cond <- prior_pred_conditions()
-
-prior_cond_spread <- prior_cond |>
-  group_by(draw, rep_num, category) |>
-  summarize(sd_prop = sd(prop), .groups = "drop")
-
-ggplot(prior_cond_spread, aes(x = rep_num, y = sd_prop, group = draw)) +
-  geom_line(alpha = 0.15, color = "steelblue") +
-  geom_line(data = obs_cond_spread, aes(x = rep_num, y = sd_prop, group = 1),
-            color = "red", linewidth = 1.5) +
-  facet_wrap(~category) +
-  labs(title = "Prior predictive: condition spread (red = observed SD across conditions)",
-       y = "SD of condition means", x = "Repetition")
-```
-
-```{r}
-
-  pos_pp_check <- function(mod, category, newdata) {
-    preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
-    # preds is [ndraws, nobs, ncategories]
-    cat_idx <- which(dimnames(preds)[[3]] == category)
-    if (length(cat_idx) == 0) {
-      stop("Category '", category, "' not found. Available: ",
-           paste(dimnames(preds)[[3]], collapse = ", "))
-    }
-
-    obs <- newdata |>
-      mutate(prop = .data[[category]] / total) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-      summarize(mean_prop = mean(prop))
-
-    pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-      newdata |>
-        mutate(pred_prop = preds[draw, , cat_idx]/total) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-        summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-        mutate(draw = draw)
-    ) |> list_rbind()
+  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
+  newdata |>
+    mutate(pred_prop = preds[draw, , cat_idx] / total) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
+    summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+    mutate(draw = draw)) |> list_rbind()
 
   if ("log_rep_num" %in% names(obs)) {
     pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
-    obs <- obs |> mutate(rep_num=exp(log_rep_num))
+    obs <- obs |> mutate(rep_num = exp(log_rep_num))
   }
-    
+
   if ("inv_rep_num" %in% names(obs)) {
-    pred_lines <- pred_lines |> mutate(rep_num = -1/inv_rep_num)
-    obs <- obs |> mutate(rep_num=-1/inv_rep_num)
+    pred_lines <- pred_lines |> mutate(rep_num = -1 / inv_rep_num)
+    obs <- obs |> mutate(rep_num = -1 / inv_rep_num)
   }
 
-    ggplot(data=pred_lines, aes(color=as.factor(condition_id))) +
-      geom_line(data = pred_lines, aes(x = rep_num, y = mean_prop, group=interaction(draw, condition_id)),
-               alpha = 0.5) +
-      geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty="dashed") +
-      geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-      labs(title = category, y = "Mean proportion", x = "Repetition")+coord_cartesian(ylim=c(0,.6))+theme(legend.position = "none")+facet_wrap(~(as.numeric(condition_id)%%5))
-  }
-
-
+  ggplot(data = pred_lines, aes(color = as.factor(condition_id))) +
+    geom_line(
+      data = pred_lines, aes(x = rep_num, y = mean_prop, group = interaction(draw, condition_id)),
+      alpha = 0.5
+    ) +
+    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
+    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
+    labs(title = category) +
+    coord_cartesian(ylim = c(0, .6)) +
+    theme(legend.position = "none", strip.text.x = element_blank(), axis.title.y=element_blank(), axis.title.x=element_blank()) +
+    facet_grid(. ~ (as.numeric(condition_id) %% 5))
+}
 
 
 pos_pp_checks <- function(mod) {
-    categories <- c("NOUN", "FUNCTION", "VERB", "MODIFIER",  "DET", "PRON"
-                    )
-    newdata_small <- mod$data |>
-      filter(!is.na(total)) |>
-      filter(total!=0) |>
-      group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-      slice_sample(n = 50) |>
-      ungroup()
+  categories <- c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON")
+  newdata_small <- mod$data |>
+    filter(!is.na(total)) |>
+    filter(total != 0) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
+    slice_sample(n = 50) |>
+    ungroup()
 
-    lapply(setNames(categories, categories), \(cat) pos_pp_check(mod, cat, newdata_small))
-  }
+  lapply(setNames(categories, categories), \(cat) pos_pp_check(mod, cat, newdata_small))
+}
 
 pos_pp_check_overall <- function(mod, category, newdata) {
   preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
   cat_idx <- which(dimnames(preds)[[3]] == category)
   if (length(cat_idx) == 0) {
-    stop("Category '", category, "' not found. Available: ",
-         paste(dimnames(preds)[[3]], collapse = ", "))
+    stop(
+      "Category '", category, "' not found. Available: ",
+      paste(dimnames(preds)[[3]], collapse = ", ")
+    )
   }
 
   rep_vars <- intersect(c("rep_num", "log_rep_num", "inv_rep_num"), names(newdata))
@@ -595,12 +601,11 @@ pos_pp_check_overall <- function(mod, category, newdata) {
     summarize(mean_prop = mean(prop), .groups = "drop")
 
   pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-    newdata |>
-      mutate(pred_prop = preds[draw, , cat_idx] / total) |>
-      group_by(across(all_of(rep_vars))) |>
-      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-      mutate(draw = draw)
-  ) |> list_rbind()
+  newdata |>
+    mutate(pred_prop = preds[draw, , cat_idx] / total) |>
+    group_by(across(all_of(rep_vars))) |>
+    summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
+    mutate(draw = draw)) |> list_rbind()
 
   if ("log_rep_num" %in% rep_vars) {
     pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
@@ -624,442 +629,56 @@ pos_pp_checks_overall <- function(mod) {
   newdata_small <- mod$data |>
     filter(!is.na(total), total != 0) |>
     group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-    slice_sample(n = 50) |>
+    # slice_sample(n = 50) |>
     ungroup()
 
   lapply(setNames(categories, categories), \(cat) pos_pp_check_overall(mod, cat, newdata_small))
 }
-
-
-
 ```
 
 ```{r}
-inv_posterior <- pos_pp_checks(pos_mod_inv)
-lin_posterior <- pos_pp_checks(pos_mod)
 log_posterior <- pos_pp_checks(pos_mod_log)
-
-#inv_posterior_2 <- pos_pp_checks(pos_mod_inv_2)
-#lin_posterior_2 <- pos_pp_checks(pos_mod_2)
-#log_posterior_2 <- pos_pp_checks(pos_mod_log_2)
-
 ```
 
 
-```{r, fig.width=10, fig.height=8}
-
+```{r, fig.width=8, fig.height=10}
 library(cowplot)
-plot_grid(inv_posterior$NOUN, inv_posterior$FUNCTION, inv_posterior$VERB, 
-          inv_posterior$MODIFIER, inv_posterior$DET, inv_posterior$PRON)
-```
-
-```{r, fig.width=10, fig.height=8}
-
-library(cowplot)
-plot_grid(inv_posterior_2$NOUN, inv_posterior_2$FUNCTION, inv_posterior_2$VERB, 
-          inv_posterior_2$MODIFIER, inv_posterior_2$DET, inv_posterior_2$PRON)
-```
-
-```{r, fig.width=10, fig.height=8}
-
-plot_grid(lin_posterior$NOUN, lin_posterior$FUNCTION, lin_posterior$VERB, 
-          lin_posterior$MODIFIER, lin_posterior$DET, lin_posterior$PRON)
-```
-
-```{r, fig.width=10, fig.height=8}
-
-plot_grid(lin_posterior_2$NOUN, lin_posterior_2$FUNCTION, lin_posterior_2$VERB, 
-          lin_posterior_2$MODIFIER, lin_posterior_2$DET, lin_posterior_2$PRON)
-```
-
-
-```{r, fig.width=10, fig.height=8}
-
-library(cowplot)
-plot_grid(log_posterior$NOUN, log_posterior$FUNCTION, log_posterior$VERB, 
-          log_posterior$MODIFIER, log_posterior$DET, log_posterior$PRON)
-```
-
-```{r, fig.width=10, fig.height=8}
-
-library(cowplot)
-plot_grid(log_posterior_2$NOUN, log_posterior_2$FUNCTION, log_posterior_2$VERB,
-          log_posterior_2$MODIFIER, log_posterior_2$DET, log_posterior_2$PRON)
-```
-
-```{r}
-log_overall <- pos_pp_checks_overall(pos_mod_log)
-log_overall_2 <- pos_pp_checks_overall(pos_mod_log_2)
-```
-
-```{r, fig.width=10, fig.height=5}
-plot_grid(log_overall$NOUN, log_overall$FUNCTION, log_overall$VERB,
-          log_overall$MODIFIER, log_overall$DET, log_overall$PRON)
-```
-
-```{r, fig.width=10, fig.height=5}
-plot_grid(log_overall_2$NOUN, log_overall_2$FUNCTION, log_overall_2$VERB,
-          log_overall_2$MODIFIER, log_overall_2$DET, log_overall_2$PRON)
-```
-
-```{r}
-# population-level only (re_formula=NA): if this also underestimates NOUN,
-# the problem is in the fixed-effect priors/estimation, not condition shrinkage
-pos_pp_check_poponly <- function(mod, category, newdata) {
-  preds <- posterior_epred(mod, newdata = newdata, ndraws = 20, re_formula = NA)
-  cat_idx <- which(dimnames(preds)[[3]] == category)
-  if (length(cat_idx) == 0) stop("Category not found: ", category)
-
-  rep_vars <- intersect(c("rep_num", "log_rep_num", "inv_rep_num"), names(newdata))
-
-  obs <- newdata |>
-    mutate(prop = .data[[category]] / total) |>
-    group_by(across(all_of(rep_vars))) |>
-    summarize(mean_prop = mean(prop), .groups = "drop")
-
-  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-    newdata |>
-      mutate(pred_prop = preds[draw, , cat_idx] / total) |>
-      group_by(across(all_of(rep_vars))) |>
-      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-      mutate(draw = draw)
-  ) |> list_rbind()
-
-  if ("log_rep_num" %in% rep_vars) {
-    pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
-    obs <- obs |> mutate(rep_num = exp(log_rep_num))
-  }
-
-  ggplot(pred_lines) +
-    geom_line(aes(x = rep_num, y = mean_prop, group = draw), alpha = 0.5, color = "tomato") +
-    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
-    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-    labs(title = paste(category, "(pop-level only)"), y = "Mean proportion", x = "Repetition") +
-    coord_cartesian(ylim = c(0, 0.6))
-}
-```
-
-```{r}
-newdata_log <- pos_mod_log$data |>
-  filter(!is.na(total), total != 0) |>
-  group_by(across(any_of(c("log_rep_num", "condition_id", "dataset_id")))) |>
-  slice_sample(n = 50) |>
-  ungroup()
-
-log_poponly <- lapply(
-  setNames(c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON"),
-           c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON")),
-  \(cat) pos_pp_check_poponly(pos_mod_log, cat, newdata_log)
+plot_grid(
+  log_posterior$NOUN, log_posterior$FUNCTION, log_posterior$VERB,
+  log_posterior$MODIFIER, log_posterior$DET, log_posterior$PRON, nrow=6
 )
 ```
 
-```{r, fig.width=10, fig.height=5}
-plot_grid(log_poponly$NOUN, log_poponly$FUNCTION, log_poponly$VERB,
-          log_poponly$MODIFIER, log_poponly$DET, log_poponly$PRON)
-```
 
+## Semantic embedding similiarities
 
+We now have multilingual embeddings for all corpora. We look at the similarity to the next rep (same game, same target) as a measure of within game similiarity. We look at the cross-game (same condition, same target, same rep) dissimilarity. 
 
-```{r}
-pos_mod$data |> select(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON, total, rep_num) |>
-  pivot_longer(NOUN:PRON) |> ggplot(aes(x=log(rep_num), y=value/total))+stat_summary()+stat_summary(geom="line")+facet_wrap(~name)
-```
+The fit shown here isn't great and we are currently running with log_rep_num instead. If that looks better, we will switch to that. 
 
-## take 2
+```{r, echo=T, eval=F}
+# Priors now on logit scale (ordbeta uses logit link)
+# logit(0.72) ≈ 0.94, so intercept around 1
+p_beta_sim <- prior_string("normal(0, 0.5)", class = "b")
+p_sd_sim <- prior_string("normal(0, 0.5)", class = "sd")
+p_intercept_sim <- prior_string("normal(1, 1.5)", class = "Intercept")
 
-```{r}
-factor_pos <- read_rds(here(mod_loc, "pos_mod_factor.rds"))
-```
+sim_priors <- c(p_intercept_sim, p_beta_sim, p_sd_sim)
 
-```{r}
-summary(factor_pos)
+sims_for_model <- read_rds(here("cached_model_files/data_for_mods/sims_for_model.rds"))
 
-factor_posterior <- pos_pp_checks(factor_pos)
-factor_overall <- pos_pp_checks_overall(factor_pos)
-```
-
-
-```{r, fig.width=10, fig.height=8}
-
-library(cowplot)
-plot_grid(factor_posterior$NOUN, factor_posterior$FUNCTION, factor_posterior$VERB,
-          factor_posterior$MODIFIER, factor_posterior$DET, factor_posterior$PRON)
-```
-
-```{r, fig.width=10, fig.height=5}
-plot_grid(factor_overall$NOUN, factor_overall$FUNCTION, factor_overall$VERB,
-          factor_overall$MODIFIER, factor_overall$DET, factor_overall$PRON)
-```
-
-## Ordbeta POS models
-
-```{r}
-ordbeta_pp_check <- function(mod, category) {
-  prop_var <- paste0("prop_", category)
-
-  newdata_small <- mod$data |>
-    filter(!is.na(.data[[prop_var]])) |>
-    group_by(log_rep_num, condition_id) |>
-    slice_sample(n = 50) |>
-    ungroup()
-
-  preds <- posterior_epred(mod, newdata = newdata_small, ndraws = 10)
-  # preds is [ndraws, nobs] for ordbeta (not 3D like multinomial)
-
-  obs <- newdata_small |>
-    mutate(rep_num = exp(log_rep_num)) |>
-    group_by(rep_num, condition_id) |>
-    summarize(mean_prop = mean(.data[[prop_var]]), .groups = "drop")
-
-  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-    newdata_small |>
-      mutate(
-        pred_prop = preds[draw, ],
-        rep_num = exp(log_rep_num)
-      ) |>
-      group_by(rep_num, condition_id) |>
-      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-      mutate(draw = draw)
-  ) |> list_rbind()
-
-  ggplot(data = pred_lines, aes(color = as.factor(condition_id))) +
-    geom_line(aes(x = rep_num, y = mean_prop, group = interaction(draw, condition_id)),
-              alpha = 0.5) +
-    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
-    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-    labs(title = category, y = "Mean proportion", x = "Repetition") +
-    coord_cartesian(ylim = c(0, 0.6)) +
-    theme(legend.position = "none") +
-    facet_wrap(~ (as.numeric(condition_id) %% 5))
-}
-
-ordbeta_pp_check_overall <- function(mod, category) {
-  prop_var <- paste0("prop_", category)
-
-  newdata_small <- mod$data |>
-    filter(!is.na(.data[[prop_var]])) |>
-    group_by(log_rep_num, condition_id) |>
-    slice_sample(n = 500) |>
-    ungroup()
-
-  preds <- posterior_epred(mod, newdata = newdata_small, ndraws = 10)
-
-  obs <- newdata_small |>
-    mutate(rep_num = exp(log_rep_num)) |>
-    group_by(rep_num) |>
-    summarize(mean_prop = mean(.data[[prop_var]]), .groups = "drop")
-
-  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-    newdata_small |>
-      mutate(pred_prop = preds[draw, ], rep_num = exp(log_rep_num)) |>
-      group_by(rep_num) |>
-      summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-      mutate(draw = draw)
-  ) |> list_rbind()
-
-  ggplot(pred_lines) +
-    geom_line(aes(x = rep_num, y = mean_prop, group = draw), alpha = 0.5, color = "steelblue") +
-    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
-    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-    labs(title = category, y = "Mean proportion", x = "Repetition") +
-    coord_cartesian(ylim = c(0, 0.6))
-}
-```
-
-```{r}
-ordbeta_categories <- c("NOUN", "VERB", "MODIFIER", "FUNCTION", "DET", "PRON")
-ordbeta_mods <- lapply(setNames(ordbeta_categories, ordbeta_categories), \(cat)
-  read_rds(here(mod_loc, paste0("pos_ordbeta_", cat, ".rds")))
+to_next_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
+  manual_prior = sim_priors,
+  file = here("cached_model_files/mods/to_next_mod.rds"),
+  data = sims_for_model |> filter(sim_type == "to_next")
 )
-ordbeta_posterior <- lapply(setNames(ordbeta_categories, ordbeta_categories), \(cat)
-  ordbeta_pp_check(ordbeta_mods[[cat]], cat)
-)
-ordbeta_overall <- lapply(setNames(ordbeta_categories, ordbeta_categories), \(cat)
-  ordbeta_pp_check_overall(ordbeta_mods[[cat]], cat)
+
+diverge_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
+  manual_prior = sim_priors,
+  file = here("cached_model_files/mods/diverge_mod.rds"),
+  data = sims_for_model |> filter(sim_type == "diverge")
 )
 ```
-
-```{r, fig.width=10, fig.height=8}
-library(cowplot)
-plot_grid(ordbeta_posterior$NOUN, ordbeta_posterior$FUNCTION, ordbeta_posterior$VERB,
-          ordbeta_posterior$MODIFIER, ordbeta_posterior$DET, ordbeta_posterior$PRON)
-```
-
-```{r, fig.width=10, fig.height=5}
-plot_grid(ordbeta_overall$NOUN, ordbeta_overall$FUNCTION, ordbeta_overall$VERB,
-          ordbeta_overall$MODIFIER, ordbeta_overall$DET, ordbeta_overall$PRON)
-```
-
-## Ord beta different priors
-
-```{r}
-preds <- per_describer_for_model |> 
-  select(rep_num, dataset_id, condition_id) |> 
-  mutate(log_rep_num = log(rep_num),
-         total = 1) |> 
-  distinct()
-
-pr_log <- predict(pos_mod_log, newdata = preds)
-
-preds_out <- preds |> 
-  cbind(pr_log) |> 
-  select(rep_num, dataset_id, condition_id, starts_with("Estimate.")) |> 
-  rename_with(\(x) str_remove(x, "^Estimate.")) |> 
-  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-               names_to = "pos",
-               values_to = "prop")
-```
-
-
-```{r, fig.width=10, fig.height=8}
-per_describer_for_model |> 
-  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-               names_to = "pos",
-               values_to = "count") |> 
-  mutate(prop = count / total) |> 
-  ggplot(aes(x = rep_num, y = prop, col = condition_id)) +
-  stat_summary(fun.data = mean_cl_boot) +
-  # geom_smooth(method = "lm", formula = y ~ log(x)) +
-  # geom_smooth(method = "glm", method.args = list(family = "quasibinomial")) +
-  geom_line(data = preds_out) +
-  facet_grid(pos ~ (as.numeric(condition_id) %% 5)) +
-  theme(legend.position = "none")
-```
-
-
-
-### Multinomial frequentist per category
-
-```{r}
-library(nnet)
-
-outcome_cols <- c("NOUN", "PRON", "VERB", "DET", "MODIFIER", "FUNCTION")  
-
-per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_describer_for_model.rds")) |>  mutate(
-    condition_id = as.factor(condition_id),
-    total = NOUN + VERB + MODIFIER + FUNCTION + DET + PRON
-  ) |>  mutate(inv_rep_num = -1 / rep_num) |> filter(total!=0) |>  mutate(rep_num=as.factor(rep_num)) |> filter(rep_num==6)
-
-#per_describer_for_model |> distinct(condition_id) |> map
-# your outcome category column names
-```
-
-
-```{r}
-df <- per_describer_for_model |> 
-  mutate(weights=1/total)
-
-outcome_mat <- as.matrix(df[, outcome_cols])
-
-fit <- multinom(outcome_mat ~ 1, weights=weights, data = df)
-
-summary(fit)
-```
-```{r}
-preds <- per_describer_for_model |> 
-  select(rep_num, dataset_id, condition_id) |> 
- # mutate(log_rep_num = log(rep_num),
-#         total = 1) |>  mutate(inv_rep_num = -1 / rep_num) |> 
-  distinct()
-
-pr_log <- predict(fit, type="probs", newdata = preds)
-
-preds_out <- preds |> 
-  cbind(pr_log) |> 
-  #select(rep_num, dataset_id, condition_id, starts_with("Estimate.")) |> 
-  # rename_with(\(x) str_remove(x, "^Estimate.")) |> 
-  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-               names_to = "pos",
-               values_to = "prop")
-```
-```{r}
-per_describer_for_model |> 
-  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-               names_to = "pos",
-               values_to = "count") |> 
-  mutate(prop = count / total) 
-
-```
-
-
-```{r, fig.width=10, fig.height=8}
-per_describer_for_model |> 
-  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-               names_to = "pos",
-               values_to = "count") |> 
-  mutate(prop = count / total) |> 
-  ggplot(aes(x = log(as.numeric(rep_num)), y = prop)) +
-  stat_summary(fun.data = mean_cl_boot) +
-   geom_smooth(method = "lm", formula = y ~ x) +
-  # geom_smooth(method = "glm", method.args = list(family = "quasibinomial")) +
-  geom_point(data = preds_out, color="red") +
-  facet_grid(pos ~ .) +
-  theme(legend.position = "none")
-```
-```{r}
-df_subset <- per_describer_for_model |> filter(condition_id==22) |>  filter(rowSums(across(all_of(outcome_cols))) >0)
-
-outcome_mat <- as.matrix(df_subset[, outcome_cols])
-
-fit <- multinom(outcome_mat ~ log_rep_num, data = df_subset)
-
-summary(fit)
-```
-
-# Let's do log
-
-```{r}
-
-outcome_cols <- c("PRON", "NOUN", "VERB", "DET", "MODIFIER", "FUNCTION")  
-
-per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_describer_for_model.rds")) |>  mutate(
-    condition_id = as.factor(condition_id),
-    total = NOUN + VERB + MODIFIER + FUNCTION + DET + PRON
-  ) |> mutate(across(outcome_cols, \(c) c/total))
-```
-
-```{r}
-
-noun_mod <- glm(NOUN ~ log_rep_num, weights = total, family = binomial, data = per_describer_for_model)
-```
-
-
-```{r}
-preds <- per_describer_for_model |> 
-  select(rep_num) |> 
-  mutate(log_rep_num = log(rep_num),
-        total = 1) |>  mutate(inv_rep_num = -1 / rep_num) |> 
-  distinct()
-
-pr_log <- predict(noun_mod, type="response", newdata = preds)
-
-preds_out <- preds |> 
-  cbind(pr_log) |> 
-  rename(prop = pr_log) #|> 
-  #select(rep_num, dataset_id, condition_id, starts_with("Estimate.")) |> 
-  # rename_with(\(x) str_remove(x, "^Estimate.")) |> 
-  # pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-  #              names_to = "pos",
-  #              values_to = "prop")
-
-
-per_describer_for_model |> 
-  pivot_longer(cols = c(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON),
-               names_to = "pos",
-               values_to = "prop") |> 
-  filter(pos == "NOUN") |> 
-  # mutate(prop = count / total) |> 
-  ggplot(aes(x = rep_num, y = prop)) +
-  stat_summary(fun.data = mean_cl_boot) +
-   # geom_smooth(method = "lm", formula = y ~ x) +
-  # geom_smooth(method = "glm", method.args = list(family = "quasibinomial")) +
-  geom_line(data = preds_out) +
-  facet_grid(pos ~ .) +
-  theme(legend.position = "none")
-
-```
-
-## SBERT
 
 ```{r}
 to_next_mod <- read_rds(here(mod_loc, "to_next_mod.rds"))
@@ -1067,20 +686,17 @@ diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
 ```
 
 ```{r}
+scalar_pp_check(to_next_mod)
 
-summary(to_next_mod)
-
-do_pp_checks(to_next_mod, "rep_num", "sim")
-
+pp_check(to_next_mod)
 ```
 
 ```{r}
+scalar_pp_check(diverge_mod)
 
-summary(diverge_mod)
-
-do_pp_checks(diverge_mod, "rep_num", "sim")
-
+pp_check(to_next_mod)
 ```
+
 # Discussion
 summary of what we did and results
 
