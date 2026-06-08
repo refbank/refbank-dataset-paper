@@ -42,12 +42,12 @@ p_beta_linear <- c(
 
 log_lin_pred_mod <- brm(
   slope | mi(se) ~ n_players +
-    # option_size +
-    # image_type +
-    # partner_constancy +
+    option_size +
+    image_type +
+    partner_constancy +
     role_constancy +
-    # population +
-    # modality +
+    population +
+    modality +
     feedback +
     backchannel,
   file = here("cached_model_files/mods/log_lin_pred.rds"),
@@ -57,12 +57,12 @@ log_lin_pred_mod <- brm(
 
 log_log_pred_mod <- brm(
   slope | mi(se) ~ n_players +
-    # option_size +
-    # image_type +
-    # partner_constancy +
+    option_size +
+    image_type +
+    partner_constancy +
     role_constancy +
-    # population +
-    # modality +
+    population +
+    modality +
     feedback +
     backchannel,
   file = here("cached_model_files/mods/log_log_pred.rds"),

@@ -133,19 +133,62 @@ This is currently an outline / pilot analysis with posterior predictive checks.
 
 # Intro
 
+Language is used to communicate, and one of the flexible things about language is that it can be used to communicate about new concepts. ... One way convention formation and related language use phenomena are often studied is via iterated reference games (introduced by CITE Krauss and popularized by CITE Clark). 
+
 ## What are ref games?
+Iterated reference games are a commonly used paradigm for studying adaptive language use. A *reference game* consist of a set of people communicating with each other about a set of potential referents. One person, the *describer*, has a specific designated target (usually pre-identified as the target by the experimenter) that they seek to communicate to the *matcher* (or matchers). This act of reference requires coordination between describer and matcher on a symbol--meaning alignment. *Iterated* reference games involve repeated reference to the same targets within the same group of people, so that a certain conversational history builds up that could shape the construction and understanding of later symbols. Crucially, this task uses referents that are somehow difficult to name in context, usually by a combination of low codeability or high similarity to each other. 
+
+As described, this task is agnostic to communication modality, and iterated reference games are sometimes conducted using gestures or drawing [@hawkins2023drawing; @garrod2007; @bohn2019]. Here, I focus on how this task interacts with the rich baseline of symbol--meaning mappings afforded by natural language. 
+
+Communicative acts serve a variety of purposes, but a simple, yet central one is reference: connecting a symbol with a meaning to pick out a target. This is a subgoal needed for more complex acts -- it's hard to tell a story or debate someone without agreement on what different words or phrases refer to. 
+
+Combining these observations -- that language can be adapted to fill communicative needs, that repeated need leads to changes in referring form, and that reference is an easy to elicit communicative act that is central to other communicative acts -- suggests the utility of iterated reference games.
+
+Reference games are a psycholinguistic task where a participant is shown a tableaux of images or objects and is asked to describe or label a particular one so a partner could pick it out of the option space. For iterated reference games in particular, this process repeats with the same or related images appearing across trials, and the trajectory of labels is of interest. Images are usually chosen so that they do not have canonical initial names and thus participants must coordinate on how to refer to different images. 
+
 
 ## What are ref games used for / what have people found
 
-## Why aggregate? 
-note: discuss both the other similar aggregation schemes have been helpful within the given topic -- childes, wordbank, peekbank, etc
+Iterated reference games are a commonly used task. The earliest studies we are aware of are from the 1960s [@krauss1964; @krauss1966; @krauss1967], and iterated reference games seem to have become more popular starting in the 1980s [@clark1986]. Iterated reference games have been used to study a wide variety of communicative and linguistic phenomena. The primary targets of study are coordination and the formation of conventions or conceptual pacts [@dahan2025; @ghaleb2024; @eliav2023; @hawkins2020dynamics; @metzing2003, among others; @brennan1996]. Some studies focus particularly on iterated reference games as a way of studying collaboration in natural conversations [@dahan2024; @wilkes-gibbs1992; @schober1989; @clark1986]. Other studies focus on other aspects of coordination, including the negotiation of referring expressions [@knutsen2018a; @bangerter2020] and the role of feedback [@krauss1966; @krauss1977;@foxtree2013]. Iterated reference games with multiple partners are used to study how speakers design their utterances for their specific partners  [@turner2021; @yoon2019audience; @yoon2014; @yoon2019contextual; @horton2005; @horton2002] and how speakers might generalize patterns of social conventions across interlocutors [@hawkins2021respect; @hawkins2020generalizing]. Iterated reference games are used as the dialogue condition in studies on the differences between monologue and dialogue [@tolins2017;@branigan2011;@murfitt2001; @foxtree1999]. Iterated reference games have also been used to study conversation and memory [@mckinley2017; @vanlangendonck2018], model  cultural conflicts between merging teams [@weber2003], examine speech-gesture trade-offs [@deruiter2012] and study the effects of alcohol on social dynamics [@garrison2024].
 
+Iterated reference games are used with children and teenagers [@leung2024; @branigan2016; @turner2021] and with older adults [@lysander2012;@horton2007;@hupet1993] to study cognitive and linguistic abilities across the lifespan. 
+
+Different studies analyse different outcomes, but a few patterns are commonly found. People tend to be good at this task with high and increasing performance even as the amount of language produced decreases over repetition. There are also qualitative shifts in the type of language produced, such as a transition towards more abstract descriptions, with more definite and bare nouns [CITATIONS]. 
+
+## Why aggregate? 
+When a number of studies exist that use the same paradigm or study the same topic, it can be helpful to aggregate them together to reach broader conclusions about the overall pattern of results and how results may vary by moderators of interest. A common approach is meta-analysis which aggregates comparable statistical results across studies. The iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Statistical results would also miss some of the richness of the data because language data is really rich or something. 
+
+Another form of aggregation is to collect raw data collected from similar paradigm and align it in a shared framework for mega-analysis. In this approach, new analytic approaches can be used on the data -- including approaches that may not have been available when some data was originally collected (ex. semantic vector embeddings), or approaches that rely on cross-study data (ex. TODO -- I was thinking IRT on wordbank). note: discuss both the other similar aggregation schemes have been helpful within the given topic -- childes, wordbank, peekbank, etc
+
+Reference game data is rich for reuse as a it contains task-related natural language and copious amounts of it. Thus
 makes data reuse easier -- make some things possible that otherwise wouldn't have been 
 
+Aggregation enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. 
 and that the aggregation makes it more helpful for further fields -- an important first step for CS/AI benchmarking/applications or for task corpora in linguistics
+
+
 
 ## Here we ...
 
+Iterated reference games (IRGs) are a commonly used paradigm for studying adaptive language use, where people communicate about a set of potential referents. On each trial, one person, the \textit{describer}, has a specific designated target that they seek to communicate to the \textit{matcher(s)}. Across trials, targets are repeated so that the conversational history shapes the construction and understanding of later utterances (Fig 1). 
+
+IRGs are widely used to study convention formation, with each experiment manipulating a small set of possible experimental design variables % . Despite the rich data yielded by IRGs,  each experiment only 
+and investigating a fraction of the possible analyses. Nevertheless, the underlying language data (and associated metadata) from IRGs constitute a high value corpus for studying not only convention formation, but also audience design, metaphor, semantic and syntactic alignment, and referring expressions; they can also be used as a benchmark for NLP models of pragmatics. \textbf{To enable this reuse, we present Refbank, an open repository of iterated reference game data.}
+
+\smallskip
+ \textbf{Refbank:}  Refbank stores data from IRGs in a relational schema, including the utterances, matcher's selections, and metadata about experimental conditions, the images, and participant demographics. A data processing pipeline creates derived measures, including semantic embeddings of utterances and similarity metrics across utterances (using S-BERT, Reimers and Gurevych, 2019).
+ Refbank data is versioned and can be accessed through \url{refbank.github.io} or via a custom R package \texttt{refbankr}. The data can also be explored via interactive visualizations. 
+Refbank currently has data from 13 datasets (12 English, 1 Dutch), including 1.3 million words from 127K referential trials from 2415 games and 7600 participants (Table 1). 7~datasets were online experiments where participants typed written messages, and 6 datasets were in-person experiments where participants spoke face-to-face. Studies varied in participant population, group size or partner switching structure, type and number of targets, and type of backchannel permitted. We are currently adding 4 more datasets with spoken interaction (2 English, 1 Swiss German, 1 French), comprising 9,000 trials (150 games).
+
+\smallskip
+ \textbf{Analyses:} One goal of Refbank is to enable the study of moderators and generalizations of phenomena observed in IRGs. We provide three examples of how Refbank can replicate and extend prior findings. 
+First, the canonical finding that the length of describer utterances decreases over repetitions replicates in Refbank, and Refbank allows exploration of how this trend is moderated by both group size and the modality of communication (Fig 2). 
+Second, Hawkins et al. (2020) and Boyce et al. (2024)  found that descriptions from adjacent repetitions become more similar in later repetitions. Refbank confirms that this observation holds across datasets and reveals that the convergence is stronger when the describer is constant across repetitions (Fig 3). 
+Third, Hawkins et al. (2020) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. In Refbank, this trade-off between nouns and closed-class words only occurs for datasets in the online written paradigm; in spoken experiments, nouns increase, but at the expense of verbs. We speculate that the ease of producing closed-class words may be modality-dependent, where it's easier to type telegraphic messages and easier to speak fluent descriptions with (phonologically reduced) closed-class items. This analysis illustrates how combining datasets allows for novel discoveries that can spur future research.
+
+\smallskip
+ \textbf{Future uses:} Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
+\textit{We are seeking more datasets (including unpublished) to grow Refbank, so please contact us if you have an IRG dataset to contribute!}
 # "Methods"
 * TODO see also how other papers do this like peekbank dataset paper etc 
 
@@ -173,7 +216,15 @@ discuss that for processing measures that include comparison across trials, need
 this is where a table of included datasets & vague properties could be helpful!
 
 ## Using refbank
-how to access etc 
+
+The refbank data is stored on redivis. A redivis account can be made freely and is used to access the data. Data is versioned, so that either the current version or a previous version of data can be used (i.e. for reproducibility). 
+
+There are multiple ways of exploring the data. There is a datapages visualization, useful for seeing how much data is in each contributing dataset, and there is shiny app at redivis.stanford.edu for exploring the data. 
+
+The data can be downloaded via 
+For  the data can be viewed on a shiny app at redivis.stanford.edu. Redivis allows for the creation of workflows that pull from datasets, and for SQL-type queries over datasets. 
+
+We 
 Shiny app / API / redivis versioning etc 
 
 # Analyses
@@ -186,48 +237,6 @@ Shiny app / API / redivis versioning etc
 Note: As a pilot to make sure we got the model specifications right (and that the models would run) we tested these on boyce2024 & hawkins2020. 
 
 All of these analyses are run only on "stage 1" data
-
-## Reduction
-
-<!-- ### Main effect of rep num  -->
-
-There's a question of what the correct functional form is for the words ~ rep_num relationship. We fit 4 options -- the full 2x2 of log or raw words x log or raw rep num. 
-
-
-```
-p_beta <- prior_string("normal(0,.5)", class = "b")
-p_sd <- prior_string("normal(0,.5)", class = "sd")
-
-p_intercept_logscale <- prior_string("normal(2,.5)", class = "Intercept")
-p_intercept_linear <- prior_string("normal(10,10)", class = "Intercept")
-p_beta_linear <- prior_string("normal(0,5)", class = "b")
-p_sd_linear <- prior_string("normal(0,5)", class = "sd")
-
-log_dv_priors <- c(p_intercept_logscale, p_beta, p_sd)
-linear_dv_priors <- c(p_intercept_linear, p_beta_linear, p_sd_linear)
-
-red_mod_log_log <- brm(log_words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
-  prior = log_dv_priors)
-
-red_mod_log_lin <- brm(log_words ~ rep_num + (rep_num || dataset_id / condition_id),
-  prior = log_dv_priors
-)
-
-red_mod_lin_log <- brm(words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
-  prior = linear_dv_priors
-)
-
-red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
-  prior = linear_dv_priors
-)
-```
-
-```{r}
-log_log_mod <- read_rds(here(mod_loc, "red_mod_log_log.rds"))
-log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
-lin_lin_mod <- read_rds(here(mod_loc, "red_mod_lin_lin.rds"))
-lin_log_mod <- read_rds(here(mod_loc, "red_mod_lin_log.rds"))
-```
 
 ```{r}
 scalar_pp_check <- function(mod, ndraws = 10) {
@@ -276,6 +285,62 @@ scalar_pp_check <- function(mod, ndraws = 10) {
     labs(y = dv, x = "Repetition")
 }
 ```
+
+## Accuracy
+
+```{r}
+acc_mod <- read_rds(here(mod_loc, "acc_mod_log_rep.rds"))
+
+```
+
+```{r}
+scalar_pp_check(acc_mod)
+
+pp_check(acc_mod)
+```
+
+## Reduction
+
+<!-- ### Main effect of rep num  -->
+
+There's a question of what the correct functional form is for the words ~ rep_num relationship. We fit 4 options -- the full 2x2 of log or raw words x log or raw rep num. 
+
+
+```
+p_beta <- prior_string("normal(0,.5)", class = "b")
+p_sd <- prior_string("normal(0,.5)", class = "sd")
+
+p_intercept_logscale <- prior_string("normal(2,.5)", class = "Intercept")
+p_intercept_linear <- prior_string("normal(10,10)", class = "Intercept")
+p_beta_linear <- prior_string("normal(0,5)", class = "b")
+p_sd_linear <- prior_string("normal(0,5)", class = "sd")
+
+log_dv_priors <- c(p_intercept_logscale, p_beta, p_sd)
+linear_dv_priors <- c(p_intercept_linear, p_beta_linear, p_sd_linear)
+
+red_mod_log_log <- brm(log_words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
+  prior = log_dv_priors)
+
+red_mod_log_lin <- brm(log_words ~ rep_num + (rep_num || dataset_id / condition_id),
+  prior = log_dv_priors
+)
+
+red_mod_lin_log <- brm(words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
+  prior = linear_dv_priors
+)
+
+red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
+  prior = linear_dv_priors
+)
+```
+
+```{r}
+log_log_mod <- read_rds(here(mod_loc, "red_mod_log_log.rds"))
+log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
+lin_lin_mod <- read_rds(here(mod_loc, "red_mod_lin_lin.rds"))
+lin_log_mod <- read_rds(here(mod_loc, "red_mod_lin_log.rds"))
+```
+
 
 ### Log-log
 

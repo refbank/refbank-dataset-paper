@@ -3,18 +3,18 @@ library(tidyr)
 library(dplyr)
 library(stringr)
 library(readr)
-favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing")
+# favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing")
 
-version <- "v12.1"
+version <- "v12.2"
 
 ### get data from redivis
-conditions <- get_conditions(datasets = favorite_datasets, version = version)
-trials <- get_trials(datasets = favorite_datasets, version = version)
-images <- get_images(datasets = favorite_datasets, version = version)
-messages <- get_messages(datasets = favorite_datasets, version = version)
-choices <- get_choices(datasets = favorite_datasets, version = version)
-pos <- get_annotated_messages(datasets = favorite_datasets, version = version)
-sbert <- get_cosine_similarities(datasets = favorite_datasets, sim_type = c("to_next", "diverge"), version = version)
+conditions <- get_conditions(version = version)
+trials <- get_trials(version = version)
+images <- get_images(version = version)
+messages <- get_messages(version = version)
+choices <- get_choices(version = version)
+pos <- get_annotated_messages(version = version)
+sbert <- get_cosine_similarities(sim_type = c("to_next", "diverge"), version = version)
 
 combined_conditions <- trials |>
   left_join(images, by = c("target" = "image_id", "dataset_id")) |>
@@ -71,6 +71,7 @@ valid_games <- valid_trials |>
 
 valid_trials_games <- valid_trials |> inner_join(valid_games)
 
+condition_info <- conditions |> select(condition_id, dataset_id, age_group = population, modality, feedback, backchannel, role_constancy)
 
 accuracy <- valid_trials_games |>
   left_join(choices) |>
@@ -108,7 +109,6 @@ pos_summary <- pos |>
   select(-c(ADV, ADJ, ADP, AUX, CCONJ, SCONJ))
 
 
-condition_info <- conditions |> select(condition_id, dataset_id, age_group = population, modality, feedback, backchannel, role_constancy)
 
 stim_type <- images |> select(target = image_id, image_type, dataset_id)
 
