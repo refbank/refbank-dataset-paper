@@ -15,7 +15,8 @@ options(
 # and create data for a slope predicting secondary model
 mod_loc <- "cached_model_files/mods"
 
-condition_info <- read_rds(here("cached_model_files/data_for_mods/condition_preds.rds"))
+condition_info <- read_rds(here("cached_model_files/data_for_mods/condition_preds.rds")) |>
+  mutate(image_type = factor(image_type, levels = c("tangram", "fribble", "photograph", "line drawing")), )
 
 log_log_mod <- read_rds(here(mod_loc, "red_mod_log_log.rds"))
 log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))

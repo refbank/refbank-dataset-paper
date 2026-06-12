@@ -1,53 +1,44 @@
 ---
-title             : |
+title: |
   | Refbank the dataset the paper
-shorttitle: Refbank
-toc : TRUE
-author: 
-  - name          : "Veronica Boyce"
-    affiliation   : "1,2"
-    corresponding : yes    # Define only one corresponding author
-    email         : "vboyce@stanford.edu"
-  - name          : "Alvin W. M. Tan"
-    affiliation   : "1"
-  - name          : "MORE AUTHORS GO HERE"
-    affiliation   : "1"
-  - name          : "Michael C. Frank"
-    affiliation   : "1"
-    
-
+author:
+- name: Veronica Boyce
+  affiliation: '1,2'
+  corresponding: true
+  email: vboyce@stanford.edu
+- name: Alvin W. M. Tan
+  affiliation: '1'
+- name: MORE AUTHORS GO HERE
+  affiliation: '1'
+- name: Michael C. Frank
+  affiliation: '1'
+toc: false
+output: papaja::apa6_pdf
 affiliation:
-  - id            : "1"
-    institution   : "Stanford University"
-  - id            : "1"
-    institution   : "Massachusetts Institute of Technology"
-
+- id: '1'
+  institution: Stanford University
+- id: '1'
+  institution: Massachusetts Institute of Technology
 authornote: |
   TODO
-
 abstract: |
   REFBANK TODO
-  
-keywords          : TODO
-wordcount         : TODO
-
-bibliography      : RefBank.bib
-
-floatsintext      : yes
-linenumbers       : yes
-draft             : no
-mask              : no
-
-figurelist        : no
-tablelist         : no
-footnotelist      : no
-
-classoption       : "man"
-csl               : apa7.csl
-#output            :  #papaja::apa6_pdf
-header-includes   :
-  - \usepackage{setspace}\singlespacing
-  - \setlength{\parskip}{0pt}
+keywords: TODO
+wordcount: TODO
+bibliography: RefBank.bib
+floatsintext: true
+linenumbers: true
+draft: false
+mask: false
+figurelist: false
+tablelist: false
+footnotelist: false
+classoption: man
+csl: apa7.csl
+header-includes:
+- \usepackage{setspace}\singlespacing
+- \setlength{\parskip}{0pt}
+shorttitle: Refbank
 ---
 
 ```{r setup, include = FALSE}
@@ -66,6 +57,7 @@ library(rstanarm)
 library(ggthemes)
 library(kableExtra)
 library(tidybayes)
+library(cowplot)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 theme_set(theme_bw())
@@ -108,6 +100,46 @@ form <- function(model_form) {
 
 mod_loc <- "cached_model_files/mods"
 
+
+plot_preds <- function(df, dv){
+  df <- df |> filter(rep_num<=6)
+  ggplot() +
+    geom_line(
+      data = df |> filter(!is.na(dataset_id)),
+      aes(
+        x = rep_num, y = mean,ymin=low, ymax=high,
+        group = interaction(condition_id)
+      ),color="grey"
+    ) +
+    geom_ribbon(
+      data = df |> filter(is.na(dataset_id)),
+      aes(x = rep_num, y = mean, ymin=low, ymax=high),color=NA, fill="blue", alpha=.3) +
+    theme(legend.position = "none")+
+   geom_line(
+      data = df |> filter(is.na(dataset_id)),
+      aes(x = rep_num, y = mean, ymin=low, ymax=high),color="blue", linewidth=1) +
+    theme(legend.position = "none")
+}
+
+plot_preds_pos <- function(df, dv){
+  df <- df |> filter(rep_num<=6)
+  ggplot() +
+    geom_line(
+      data = df |> filter(!is.na(dataset_id)),
+      aes(
+        x = rep_num, y = mean,ymin=low, ymax=high,
+        group = interaction(condition_id, pos)
+      ),color="grey"
+    ) +
+    geom_ribbon(
+      data = df |> filter(is.na(dataset_id)),
+      aes(x = rep_num, y = mean, ymin=low, ymax=high, fill=pos, group=pos),alpha=.3) +
+    theme(legend.position = "none")+
+   geom_line(
+      data = df |> filter(is.na(dataset_id)),
+      aes(x = rep_num, y = mean, ymin=low, ymax=high, color=pos, group=pos), linewidth=1) +
+    theme(legend.position = "none")+facet_wrap(~pos)
+}
 
 ```
 
@@ -179,7 +211,9 @@ Third, Hawkins et al. (2020) found that the distribution of parts of speech in d
 \smallskip
  \textbf{Future uses:} Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
 \textit{We are seeking more datasets (including unpublished) to grow Refbank, so please contact us if you have an IRG dataset to contribute!}
+
 # "Methods"
+
 * TODO see also how other papers do this like peekbank dataset paper etc 
 
 ## Data description 
@@ -187,7 +221,12 @@ Third, Hawkins et al. (2020) found that the distribution of parts of speech in d
 
 ## Schema
 
-TODO schema image (from presentation?)
+```{r interface, fig.env = "figure", fig.pos = "t!", out.width="\\textwidth", fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "TODO", cache=FALSE}
+
+knitr::include_graphics("schema.png")
+
+
+```
 
 the key unit in our schema is the trial, which we define as the actions associated with picking out one target image out of a pool of options. Each trial can be associated with messages -- speech acts or typed messages from describer and matchers, which are associated with the trial, who produced them, and what order they are in within the trial. Trials also have choice information -- who selected what option. 
 
@@ -241,6 +280,22 @@ In producing these measures, we apply our own light exclusions, requiring that t
 this is where a table of included datasets & vague properties could be helpful!
 To populate refbank, we started with datasets that had been collected by the authors, and that already had publicly posted data. We then sent emails soliciting data from people who published this type of study. 
 
+TODO dataset summary definitely implies a few problems with how this is created!
+
+```{r}
+library(refbankr)
+version <- "v12.2"
+
+condition_summary <- refbankr::get_dataset_summary(version=version)
+
+dataset_summary <- condition_summary |>  group_by(dataset_id) |> summarize(
+  across(c("language", "group_size", "option_set_size", "trials_per_game", "reps_per_game",
+           "prior_relationship", "partner_constancy", "role_constancy", "population", "confederates", "modality", "feedback", "backchannel"), \(x) paste(unique(x),collapse=", " )),
+         across(starts_with("total"), sum)
+)
+
+dataset_summary |> knitr::kable(caption="TODO")
+```
 
 ## Using refbank
 
@@ -261,132 +316,23 @@ As examples of analyses that are made easy by Refbank, we show a few analyses
 ## Confirmation of common patterns
 
 ```{r}
+read_rds(here(mod_loc, "predicted", "acc_mod_log_rep.rds")) |> plot_preds("Accuracy")+labs(y="Accuracy", x="Repetition Number")
 
-```
+read_rds(here(mod_loc, "predicted", "red_mod_log_log.rds")) |> mutate(across(c("mean", "low", "high"), exp)) |> plot_preds("Reduction log lin")+labs(x="Repetition Number")
 
-```{r}
-acc_mod <- read_rds(here(mod_loc, "acc_mod_log_rep.rds"))
-get_preds(acc_mod) |> write_rds(here(mod_loc, "predicted", "acc.rds"))
-```
-
-```{r}
-
-plot_preds <- function(df, dv){
-  df <- df |> filter(rep_num<=6)
-  ggplot() +
-    geom_line(
-      data = df |> filter(!is.na(dataset_id)),
-      aes(
-        x = rep_num, y = mean_pred,
-        group = interaction(condition_id),
-      ),
-      alpha = 0.2
-    ) +
-    geom_line(
-      data = df |> filter(is.na(dataset_id)),
-      aes(x = rep_num, y = mean_pred),color="blue",
-      size=1) +
-    theme(legend.position = "none")
-}
-```
-
-```{r}
-read_rds(here(mod_loc, "predicted", "acc.rds")) |> plot_preds("Accuracy")+labs(y="Accuracy", x="Repetition Number")
 ```
 
 ## Accuracy
 
 ```{r}
-acc_mod <- read_rds(here(mod_loc, "acc_mod_log_rep.rds"))
-
+acc_stats <- read_rds(here(mod_loc, "summary", "acc_mod_log_rep.rds")) |> mutate(across(c("Estimate", "lower", "upper"), exp))
 ```
 
-```{r}
-scalar_pp_check(acc_mod)
-
-pp_check(acc_mod)
-```
+Accuracy is generally high to start with, but also increases over repetitions (OR of one log-rep-num later `r stats_text(acc_stats, 2)`). 
 
 ## Reduction
 
-<!-- ### Main effect of rep num  -->
 
-There's a question of what the correct functional form is for the words ~ rep_num relationship. We fit 4 options -- the full 2x2 of log or raw words x log or raw rep num. 
-
-
-```
-p_beta <- prior_string("normal(0,.5)", class = "b")
-p_sd <- prior_string("normal(0,.5)", class = "sd")
-
-p_intercept_logscale <- prior_string("normal(2,.5)", class = "Intercept")
-p_intercept_linear <- prior_string("normal(10,10)", class = "Intercept")
-p_beta_linear <- prior_string("normal(0,5)", class = "b")
-p_sd_linear <- prior_string("normal(0,5)", class = "sd")
-
-log_dv_priors <- c(p_intercept_logscale, p_beta, p_sd)
-linear_dv_priors <- c(p_intercept_linear, p_beta_linear, p_sd_linear)
-
-red_mod_log_log <- brm(log_words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
-  prior = log_dv_priors)
-
-red_mod_log_lin <- brm(log_words ~ rep_num + (rep_num || dataset_id / condition_id),
-  prior = log_dv_priors
-)
-
-red_mod_lin_log <- brm(words ~ log_rep_num + (log_rep_num || dataset_id / condition_id),
-  prior = linear_dv_priors
-)
-
-red_mod_lin_lin <- brm(words ~ rep_num + (rep_num || dataset_id / condition_id),
-  prior = linear_dv_priors
-)
-```
-
-```{r}
-log_log_mod <- read_rds(here(mod_loc, "red_mod_log_log.rds"))
-log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
-lin_lin_mod <- read_rds(here(mod_loc, "red_mod_lin_lin.rds"))
-lin_log_mod <- read_rds(here(mod_loc, "red_mod_lin_log.rds"))
-```
-
-
-### Log-log
-
-Note: here and elsewhere, the panels and colors are just different conditions. We want to make sure that the random effects can capture condition differences, and we spread them across panels for viewability. 
-
-```{r}
-scalar_pp_check(log_log_mod)
-
-pp_check(log_log_mod)
-```
-
-
-note that log words the actual data is spikey because number of words is discrete, so it can be 0 or log(2) or etc, but not in between. 
-
-### Log-lin
-
-```{r}
-scalar_pp_check(log_lin_mod)
-
-pp_check(log_log_mod)
-```
-
-### Lin-log
-
-```{r}
-scalar_pp_check(lin_log_mod)
-
-pp_check(lin_log_mod)
-```
-
-### Lin-lin
-
-```{r}
-scalar_pp_check(lin_lin_mod)
-pp_check(lin_log_mod)
-```
-
-### Loo
 ```{r}
 loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
 loo_log_lin <- readRDS(here(mod_loc, "loo_log_lin.rds"))
@@ -394,25 +340,27 @@ loo_lin_log <- readRDS(here(mod_loc, "loo_lin_log.rds"))
 loo_lin_lin <- readRDS(here(mod_loc, "loo_lin_lin.rds"))
 loo_log_log_orig <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
 loo_log_lin_orig <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
+
+
+loo_comparison <- loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> print(simplify = F)
+
+#loo_compare(list(log_log = loo_log_log, log_lin = loo_log_lin))
 ```
 
+One question is what functional form relationship best describes the change in number of words over repetitions. CITE whoever says that it should be a power-law, and looks at N datasets. Here, we use refbank, which has more datasets, and consider 4 options for functional form -- log or raw scale words and log or raw scale repetition number. We found that the best fitting model was log(words)~log(rep), but it was only slightly better than log(words)~rep (elpd difference of: `r loo_comparison[2,1]`). Models with a linear number of words were much worse (elpd differences of `r loo_comparison[3,1]` and `r loo_comparison[4,1]`). 
+
+
+<!-- ### Main effect of rep num  -->
+
+There's a question of what the correct functional form is for the words ~ rep_num relationship. We fit 4 options -- the full 2x2 of log or raw words x log or raw rep num. 
 
 ```{r}
-loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> print(simplify = F)
-
-loo_compare(list(log_log = loo_log_log, log_lin = loo_log_lin))
+red_stats <- read_rds(here(mod_loc, "summary", "red_mod_log_log.rds")) 
 ```
 
-```{r,eval=F}
-pred_log_log <- predict(log_log_mod)
-
-pred_log_lin <- predict(log_lin_mod)
-
-mean(abs(pred_log_log - pred_log_lin))
-```
+There is a substantial decrease in the number of words over repetitions (a change of `r stats_text(red_stats, 2)` log-words per log-rep-num). 
 
 
-Log words fits way better, and seems right -- whether it's a lot or power law relationship is hard to tell. 
 
 ## Reduction Moderators
 
@@ -420,7 +368,7 @@ Two possible approaches to moderators.
 
 1. take the (well-performing) above models (log-log and log-lin), then predict the slopes for each condition based on all the predictor variables (runs fast)
 
-```{r, echo=T, eval=F}
+```{r, eval=F}
 p_beta_linear <- prior_string("normal(0,.2)", class = "b")
 
 log_lin_pred_mod <- brm(
@@ -446,7 +394,7 @@ For the full model, we'd have all the predictors, but we don't have variation on
 (and same for log-lin relationship)
 For the full model, we'd have all the predictors and all three models, but we don't have variation on many of them with just the two pilot datasets. 
 
-```{r, echo=T, eval=F}
+```{r, eval=F}
 p_intercept_logscale <- prior_string("normal(2,.5)", class = "Intercept")
 p_intercept_linear <- prior_string("normal(10,10)", class = "Intercept")
 p_beta_linear <- prior_string("normal(0,5)", class = "b")
@@ -478,297 +426,91 @@ red_mod_log_log_channel <- brm(
 )
 ```
 
-
-
+Not sure what to do here -- we really have too many predictors with many of them being multilevel and it's a lot? maybe what we do is a make a graph, but we don't really have the data? 
+like, it's very condition dependent...
 ```{r, eval=F}
-log_lin_pred <- read_rds(here(mod_loc, "log_lin_pred.rds"))
+log_lin_pred <- read_rds(here(mod_loc,"summary", "log_lin_pred.rds"))
 
-log_log_pred <- read_rds(here(mod_loc, "log_log_pred.rds"))
+log_log_pred <- read_rds(here(mod_loc, "summary", "log_log_pred.rds"))
 ```
 
-```{r, eval=F}
-summary(log_lin_pred)
-
-summary(log_log_pred)
-```
-
-```{r, eval=F}
-participants_log_log <- read_rds(here(mod_loc, "red_mod_log_log_participants.rds"))
-
-participants_log_lin <- read_rds(here(mod_loc, "red_mod_log_lin_participants.rds"))
-
-channel_log_log <- read_rds(here(mod_loc, "red_mod_log_log_channel.rds"))
-
-
-channel_log_lin <- read_rds(here(mod_loc, "red_mod_log_lin_channel.rds"))
-```
-
-```{r, eval=F}
-summary(participants_log_log)
-
-summary(participants_log_lin)
-```
-
-```{r, eval=F}
-summary(channel_log_log)
-
-summary(channel_log_lin)
-```
-
-
-### Moderation by participant structure
-n-players, age-group (on stage 1 only, using n-players who are active at this point)
-
-So, comparing for n-players 
-
-* log-log slope model: -.01 (-.06 - .04 )
-* log-lin slope model: -.01 (-.02 - .01 )
-* log-log full model: -.01 (-.04 - .02 )
-* log-lin full model: -.01 (-.02 - -0 )
-
-pilot samples doesn't have age-group variation 
-
-### Moderation by expt design / communication channel
-thickness, modality 
-
-For role-constancy (yes):
-
-* log-log slope model: -.03 (-.23 - .18)
-* log-lin slope model: .00 (-.08 - .09)
-* log-log full model: -.05 (-.31 - .18)
-* log-lin full model: 0.00 (-.09 - .09)
-
-For feedback (limited):
-
-* log-log slope model: .01 (-.19 - .21)
-* log-lin slope model: -.01 (-.09 - .08)
-* log-log full model: -.05 (-.30 - .20)
-* log-lin full model: -.01 (-.10 - .08)
-
-For backchannel (limited):
-
-* log-log slope model: .31 (.08 - .50)
-* log-lin slope model: .14 (.06 - .21)
-* log-log full model: .38 (.15 - .60)
-* log-lin full model: .15 (.06 - .23)
-
-### Stim sets
-type of stims x n targets 
-
-no variation to compare in this set
-
-### So which to choose?
-
-Estimates between slope and full model with the same functional form are quite consistent -- so which one should we use?
 
 ## PoS
+```{r, eval=F}
 
+tibble(log_rep_num = c(log(1), log(6)),
+    total = 1,
+    rep = factor(c("first", "last"), levels = c("first", "last"))
+  ) |> 
+    add_epred_draws(pos_mod_log, re_formula = NA) |> ungroup() |>
+    select(.draw, .category, rep, .epred) |>
+    pivot_wider(names_from = rep, values_from = .epred) |> 
+    mutate(diff = last - first) |>
+    group_by(.category) |>
+    median_qi(diff) |> write_rds(here(mod_loc, "summary", "pos_prob_scale.rds" ))
+
+
+```
+
+```{r}
+pos_stats <- read_rds(here(mod_loc, "summary", "pos_prob_scale.rds")) |> rename(Estimate=diff, lower=.lower, upper=.upper, Term=.category)
+```
+
+From the first to sixth rep, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decreasing (`r stats_text(pos_stats,6)`). Other categories remain relatively constant in proportion. actually verbs and dets decrease slightly, but range includes 0, modifier is pretty constant. 
+
+```{r}
+
+
+read_rds(here(mod_loc, "predicted", "pos_log_mod.rds")) |>rename(pos=.category) |> 
+  mutate(pos=case_when(
+    pos=="NOUN" ~ "noun",
+    pos=="VERB" ~ "verb",
+    pos=="MODIFIER" ~ "modifier (adj/adv)",
+    pos=="DET" ~ "determiner", 
+    pos=="PRON" ~ "pronoun",
+    pos=="FUNCTION"~ "other function word")) |> 
+      plot_preds_pos("Reduction log lin")+labs(x="Repetition Number")
+
+
+```
 We have PoS data for all monolingual corpora.
-
-After much model wrangling, Alvin and I got multinomial models for PoS working. 
-
-The best functional form relationship is using log(rep_num)
-
-```{r, echo=T, eval=F}
-p_beta_pos <- prior_string("normal(0,1.5)", class = "b", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
-p_sd_pos <- prior_string("normal(0,1.5)", class = "sd", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
-p_intercept_pos <- prior_string("normal(0, 1.5)", class = "Intercept", dpar = c("muDET", "muFUNCTION", "muMODIFIER", "muNOUN", "muVERB"))
-
-logistic_pos_priors <- c(p_beta_pos, p_sd_pos, p_intercept_pos)
-
-per_describer_for_model <- read_rds(here("cached_model_files/data_for_mods/per_describer_for_model.rds")) |>
-  mutate(
-    condition_id = as.factor(condition_id),
-    total = NOUN + VERB + MODIFIER + FUNCTION + DET + PRON,
-    w = 1 / total
-  ) |>
-  filter(total != 0)
-
-pos_mod_log <- brm(
-  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) + weights(w) ~ log_rep_num +
-    (log_rep_num || dataset_id / condition_id),
-  family = multinomial(refcat = "PRON"),
-  prior = logistic_pos_priors,
-)
-```
-
-```{r}
-pos_mod_log <- read_rds(here(mod_loc, "pos_log_mod.rds"))
-```
-
-```{r}
-pos_pp_check <- function(mod, category, newdata) {
-  preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
-  # preds is [ndraws, nobs, ncategories]
-  cat_idx <- which(dimnames(preds)[[3]] == category)
-  if (length(cat_idx) == 0) {
-    stop(
-      "Category '", category, "' not found. Available: ",
-      paste(dimnames(preds)[[3]], collapse = ", ")
-    )
-  }
-
-  obs <- newdata |>
-    mutate(prop = .data[[category]] / total) |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-    summarize(mean_prop = mean(prop))
-
-  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-  newdata |>
-    mutate(pred_prop = preds[draw, , cat_idx] / total) |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-    summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-    mutate(draw = draw)) |> list_rbind()
-
-  if ("log_rep_num" %in% names(obs)) {
-    pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
-    obs <- obs |> mutate(rep_num = exp(log_rep_num))
-  }
-
-  if ("inv_rep_num" %in% names(obs)) {
-    pred_lines <- pred_lines |> mutate(rep_num = -1 / inv_rep_num)
-    obs <- obs |> mutate(rep_num = -1 / inv_rep_num)
-  }
-
-  ggplot(data = pred_lines, aes(color = as.factor(condition_id))) +
-    geom_line(
-      data = pred_lines, aes(x = rep_num, y = mean_prop, group = interaction(draw, condition_id)),
-      alpha = 0.5
-    ) +
-    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
-    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-    labs(title = category) +
-    coord_cartesian(ylim = c(0, .6)) +
-    theme(legend.position = "none", strip.text.x = element_blank(), axis.title.y=element_blank(), axis.title.x=element_blank()) +
-    facet_grid(. ~ (as.numeric(condition_id) %% 5))
-}
-
-
-pos_pp_checks <- function(mod) {
-  categories <- c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON")
-  newdata_small <- mod$data |>
-    filter(!is.na(total)) |>
-    filter(total != 0) |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-    slice_sample(n = 50) |>
-    ungroup()
-
-  lapply(setNames(categories, categories), \(cat) pos_pp_check(mod, cat, newdata_small))
-}
-
-pos_pp_check_overall <- function(mod, category, newdata) {
-  preds <- posterior_epred(mod, newdata = newdata, ndraws = 10)
-  cat_idx <- which(dimnames(preds)[[3]] == category)
-  if (length(cat_idx) == 0) {
-    stop(
-      "Category '", category, "' not found. Available: ",
-      paste(dimnames(preds)[[3]], collapse = ", ")
-    )
-  }
-
-  rep_vars <- intersect(c("rep_num", "log_rep_num", "inv_rep_num"), names(newdata))
-
-  obs <- newdata |>
-    mutate(prop = .data[[category]] / total) |>
-    group_by(across(all_of(rep_vars))) |>
-    summarize(mean_prop = mean(prop), .groups = "drop")
-
-  pred_lines <- map(seq_len(dim(preds)[1]), \(draw)
-  newdata |>
-    mutate(pred_prop = preds[draw, , cat_idx] / total) |>
-    group_by(across(all_of(rep_vars))) |>
-    summarize(mean_prop = mean(pred_prop), .groups = "drop") |>
-    mutate(draw = draw)) |> list_rbind()
-
-  if ("log_rep_num" %in% rep_vars) {
-    pred_lines <- pred_lines |> mutate(rep_num = exp(log_rep_num))
-    obs <- obs |> mutate(rep_num = exp(log_rep_num))
-  }
-  if ("inv_rep_num" %in% rep_vars) {
-    pred_lines <- pred_lines |> mutate(rep_num = -1 / inv_rep_num)
-    obs <- obs |> mutate(rep_num = -1 / inv_rep_num)
-  }
-
-  ggplot(pred_lines) +
-    geom_line(aes(x = rep_num, y = mean_prop, group = draw), alpha = 0.5, color = "steelblue") +
-    geom_line(data = obs, aes(x = rep_num, y = mean_prop), lty = "dashed") +
-    geom_point(data = obs, aes(x = rep_num, y = mean_prop)) +
-    labs(title = category, y = "Mean proportion", x = "Repetition") +
-    coord_cartesian(ylim = c(0, 0.6))
-}
-
-pos_pp_checks_overall <- function(mod) {
-  categories <- c("NOUN", "FUNCTION", "VERB", "MODIFIER", "DET", "PRON")
-  newdata_small <- mod$data |>
-    filter(!is.na(total), total != 0) |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "inv_rep_num", "condition_id", "dataset_id")))) |>
-    # slice_sample(n = 50) |>
-    ungroup()
-
-  lapply(setNames(categories, categories), \(cat) pos_pp_check_overall(mod, cat, newdata_small))
-}
-```
-
-```{r}
-log_posterior <- pos_pp_checks(pos_mod_log)
-```
-
-
-```{r, fig.width=8, fig.height=10}
-library(cowplot)
-plot_grid(
-  log_posterior$NOUN, log_posterior$FUNCTION, log_posterior$VERB,
-  log_posterior$MODIFIER, log_posterior$DET, log_posterior$PRON, nrow=6
-)
-```
 
 
 ## Semantic embedding similiarities
+
+Relevant various places, but we should decide what the plots should be -- here is shown with model fits, both with per condition ranef and with overall (+95% CI).
+
+```{r}
+to_next_stats <- read_rds(here(mod_loc, "summary", "to_next_mod.rds"))
+diverge_stats <- read_rds(here(mod_loc, "summary", "diverge_mod.rds"))
+
+```
+
+One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in some semantic vector space and then look at distance metrics like cosine similarity. Here, as part of our processing pipeline, we run all descriptions through TODO what thing that wasn't SBERT did we use and then take cosine similarities between relevant pairs. 
+
+Within a game, the similarity between descriptions in adjacent repetitions is an index of convention formation -- with high similarity the descriptions are stable and not changing very much. Similarity to the next round description increases over repetition (per log-rep-num:`r stats(to_next_stats, 2)`)
+
+TODO we do need to give model spec somewhere!
+
+Similarity to descriptions from other games decreased  over repetition (per log-rep-num:`r stats(diverge_stats, 2)`)
+
+```{r, fig.width=6, fig.height=3, fig.cap="TODO"}
+
+
+to_next_plot <- read_rds(here(mod_loc, "predicted", "to_next_mod.rds")) |> filter(rep_num<6) |>  plot_preds("Reduction log lin")+labs(x="Repetition Number",y="Cosine similarity")+coord_cartesian(ylim=c(.5, 1), xlim=c(1,5))+labs(title="Within groups")
+
+
+diverge_plot <- read_rds(here(mod_loc, "predicted", "diverge_mod.rds"))  |>  plot_preds("Reduction log lin")+labs(x="Repetition Number", y="Cosine similarity")+coord_cartesian(ylim=c(.5, 1))+labs(title="Across groups")
+
+plot_grid(to_next_plot, diverge_plot, labels="AUTO")
+
+```
 
 We now have multilingual embeddings for all corpora. We look at the similarity to the next rep (same game, same target) as a measure of within game similiarity. We look at the cross-game (same condition, same target, same rep) dissimilarity. 
 
 The fit shown here isn't great and we are currently running with log_rep_num instead. If that looks better, we will switch to that. 
 
-```{r, echo=T, eval=F}
-# Priors now on logit scale (ordbeta uses logit link)
-# logit(0.72) ≈ 0.94, so intercept around 1
-p_beta_sim <- prior_string("normal(0, 0.5)", class = "b")
-p_sd_sim <- prior_string("normal(0, 0.5)", class = "sd")
-p_intercept_sim <- prior_string("normal(1, 1.5)", class = "Intercept")
 
-sim_priors <- c(p_intercept_sim, p_beta_sim, p_sd_sim)
-
-sims_for_model <- read_rds(here("cached_model_files/data_for_mods/sims_for_model.rds"))
-
-to_next_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
-  manual_prior = sim_priors,
-  file = here("cached_model_files/mods/to_next_mod.rds"),
-  data = sims_for_model |> filter(sim_type == "to_next")
-)
-
-diverge_mod <- ordbetareg(sim ~ rep_num + (rep_num || dataset_id / condition_id),
-  manual_prior = sim_priors,
-  file = here("cached_model_files/mods/diverge_mod.rds"),
-  data = sims_for_model |> filter(sim_type == "diverge")
-)
-```
-
-```{r}
-to_next_mod <- read_rds(here(mod_loc, "to_next_mod.rds"))
-diverge_mod <- read_rds(here(mod_loc, "diverge_mod.rds"))
-```
-
-```{r}
-scalar_pp_check(to_next_mod)
-
-pp_check(to_next_mod)
-```
-
-```{r}
-scalar_pp_check(diverge_mod)
-
-pp_check(diverge_mod)
-```
 
 # Discussion
 summary of what we did and results
