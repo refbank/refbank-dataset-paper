@@ -143,6 +143,13 @@ plot_preds_pos <- function(df, dv){
 
 ```
 
+# TODO list
+
+* wait for similarity models to re-run
+* any other dataset exclusions (ex: hawkins2019 person-bot from accuracy?... from elsewhere?)
+* troubleshoot weird numbers in the summary table
+* what do to about reduction moderators ... we just have too many variables and conditions?
+
 
 # Intro
 
@@ -205,8 +212,8 @@ Refbank currently has data from 13 datasets (12 English, 1 Dutch), including 1.3
 \smallskip
  \textbf{Analyses:} One goal of Refbank is to enable the study of moderators and generalizations of phenomena observed in IRGs. We provide three examples of how Refbank can replicate and extend prior findings. 
 First, the canonical finding that the length of describer utterances decreases over repetitions replicates in Refbank, and Refbank allows exploration of how this trend is moderated by both group size and the modality of communication (Fig 2). 
-Second, Hawkins et al. (2020) and Boyce et al. (2024)  found that descriptions from adjacent repetitions become more similar in later repetitions. Refbank confirms that this observation holds across datasets and reveals that the convergence is stronger when the describer is constant across repetitions (Fig 3). 
-Third, Hawkins et al. (2020) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. In Refbank, this trade-off between nouns and closed-class words only occurs for datasets in the online written paradigm; in spoken experiments, nouns increase, but at the expense of verbs. We speculate that the ease of producing closed-class words may be modality-dependent, where it's easier to type telegraphic messages and easier to speak fluent descriptions with (phonologically reduced) closed-class items. This analysis illustrates how combining datasets allows for novel discoveries that can spur future research.
+
+
 
 \smallskip
  \textbf{Future uses:} Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
@@ -266,6 +273,7 @@ We code several meta-data factors as condition information. These include
 etc etc 
 
 in the condition table 
+when there were borderline cases that were not explicit we inferred them and made a note in the readme. 
 
 ### Derivative measures 
 things like word count, sbert, pos, other stuff 
@@ -282,6 +290,9 @@ To populate refbank, we started with datasets that had been collected by the aut
 
 TODO dataset summary definitely implies a few problems with how this is created!
 
+in text overall size at current version!
+
+possibly two tables -- 1 w/ "diversity" of types of stuff and 1 w/ sizes?
 ```{r}
 library(refbankr)
 version <- "v12.2"
@@ -294,7 +305,7 @@ dataset_summary <- condition_summary |>  group_by(dataset_id) |> summarize(
          across(starts_with("total"), sum)
 )
 
-dataset_summary |> knitr::kable(caption="TODO")
+dataset_summary |> knitr::kable(caption="TOD")
 ```
 
 ## Using refbank
@@ -316,10 +327,11 @@ As examples of analyses that are made easy by Refbank, we show a few analyses
 ## Confirmation of common patterns
 
 ```{r}
-read_rds(here(mod_loc, "predicted", "acc_mod_log_rep.rds")) |> plot_preds("Accuracy")+labs(y="Accuracy", x="Repetition Number")
+acc_plot <- read_rds(here(mod_loc, "predicted", "acc_mod_log_rep.rds")) |> plot_preds("Accuracy")+labs(y="Accuracy", x="Repetition Number")
 
-read_rds(here(mod_loc, "predicted", "red_mod_log_log.rds")) |> mutate(across(c("mean", "low", "high"), exp)) |> plot_preds("Reduction log lin")+labs(x="Repetition Number")
+red_plot <- read_rds(here(mod_loc, "predicted", "red_mod_log_log.rds")) |> mutate(across(c("mean", "low", "high"), exp)) |> plot_preds("Reduction log lin")+labs(x="Repetition Number")
 
+plot_grid(acc_plot, red_plot)
 ```
 
 ## Accuracy
@@ -328,7 +340,7 @@ read_rds(here(mod_loc, "predicted", "red_mod_log_log.rds")) |> mutate(across(c("
 acc_stats <- read_rds(here(mod_loc, "summary", "acc_mod_log_rep.rds")) |> mutate(across(c("Estimate", "lower", "upper"), exp))
 ```
 
-Accuracy is generally high to start with, but also increases over repetitions (OR of one log-rep-num later `r stats_text(acc_stats, 2)`). 
+Accuracy is generally high to start with, but also increases over repetitions (Odds ratio of one log-rep-num later `r stats_text(acc_stats, 2)`). 
 
 ## Reduction
 
@@ -342,7 +354,7 @@ loo_log_log_orig <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
 loo_log_lin_orig <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
 
 
-loo_comparison <- loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> print(simplify = F)
+loo_comparison <- loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin))
 
 #loo_compare(list(log_log = loo_log_log, log_lin = loo_log_lin))
 ```
@@ -458,6 +470,8 @@ pos_stats <- read_rds(here(mod_loc, "summary", "pos_prob_scale.rds")) |> rename(
 
 From the first to sixth rep, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decreasing (`r stats_text(pos_stats,6)`). Other categories remain relatively constant in proportion. actually verbs and dets decrease slightly, but range includes 0, modifier is pretty constant. 
 
+Third, Hawkins et al. (2020) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. In Refbank, this trade-off between nouns and closed-class words only occurs for datasets in the online written paradigm; in spoken experiments, nouns increase, but at the expense of verbs. We speculate that the ease of producing closed-class words may be modality-dependent, where it's easier to type telegraphic messages and easier to speak fluent descriptions with (phonologically reduced) closed-class items. This analysis illustrates how combining datasets allows for novel discoveries that can spur future research.
+
 ```{r}
 
 
@@ -491,6 +505,8 @@ One way of quantifying the semantic trajectories of descriptions over repetition
 Within a game, the similarity between descriptions in adjacent repetitions is an index of convention formation -- with high similarity the descriptions are stable and not changing very much. Similarity to the next round description increases over repetition (per log-rep-num:`r stats(to_next_stats, 2)`)
 
 TODO we do need to give model spec somewhere!
+
+Second, Hawkins et al. (2020) and Boyce et al. (2024)  found that descriptions from adjacent repetitions become more similar in later repetitions. Refbank confirms that this observation holds across datasets and reveals that the convergence is stronger when the describer is constant across repetitions (Fig 3). 
 
 Similarity to descriptions from other games decreased  over repetition (per log-rep-num:`r stats(diverge_stats, 2)`)
 
