@@ -31,11 +31,13 @@ vignettes/*.pdf
 # knitr and R markdown default cache directories
 *_cache/
 /cache/
-
+*_files/
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+*.html
 
+hsp_2026/*
 # R Environment Variables
 .Renviron
 
@@ -55,3 +57,5 @@ rsconnect/
 *.gz
 *.wmf
 *.svg
+
+cached_model_files/mods/*.rds

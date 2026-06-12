@@ -345,7 +345,7 @@ Accuracy is generally high to start with, but also increases over repetitions (O
 ## Reduction
 
 
-```{r}
+```{r, eval=F}
 loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
 loo_log_lin <- readRDS(here(mod_loc, "loo_log_lin.rds"))
 loo_lin_log <- readRDS(here(mod_loc, "loo_lin_log.rds"))
@@ -353,8 +353,12 @@ loo_lin_lin <- readRDS(here(mod_loc, "loo_lin_lin.rds"))
 loo_log_log_orig <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
 loo_log_lin_orig <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
 
+loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> write_rds(here(mod_loc, "summary", "loo.rds"))
+```
 
-loo_comparison <- loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log = loo_lin_log, lin_lin = loo_lin_lin))
+
+```{r}
+loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
 
 #loo_compare(list(log_log = loo_log_log, log_lin = loo_log_lin))
 ```
