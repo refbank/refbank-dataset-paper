@@ -108,28 +108,9 @@ form <- function(model_form) {
 
 mod_loc <- "cached_model_files/mods"
 
-do_preds <- function(model) {
-  mod <- here(model_loc, model) |> read_rds()
-  preds <- expand_grid(rep = 1:6) |>
-    add_linpred_draws(mod, value = "predicted", re_formula = NA) |>
-    group_by(rep) |>
-    summarize(
-      mean = mean(predicted),
-      low = quantile(predicted, .025),
-      high = quantile(predicted, .975)
-    )
-  return(preds)
-}
 
-smol_data <- function(mod) {
-  mod$data |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "dataset_id", "condition_id")))) |>
-    slice_sample(n = 50) |>
-    ungroup()
-}
 ```
 
-This is currently an outline / pilot analysis with posterior predictive checks.
 
 # Intro
 
@@ -158,7 +139,13 @@ Different studies analyse different outcomes, but a few patterns are commonly fo
 ## Why aggregate? 
 When a number of studies exist that use the same paradigm or study the same topic, it can be helpful to aggregate them together to reach broader conclusions about the overall pattern of results and how results may vary by moderators of interest. A common approach is meta-analysis which aggregates comparable statistical results across studies. The iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Statistical results would also miss some of the richness of the data because language data is really rich or something. 
 
+There are a number of dimensions of variation in reference games, including different stimuli choices, different numbers of options, and different sizes and structures of groups. Running a new experiment across all these options would be expensive, so aggregating existing data provides a way to increase what we can learn from the data we already have, and allow for more pinpointed studies in the future. 
+
 Another form of aggregation is to collect raw data collected from similar paradigm and align it in a shared framework for mega-analysis. In this approach, new analytic approaches can be used on the data -- including approaches that may not have been available when some data was originally collected (ex. semantic vector embeddings), or approaches that rely on cross-study data (ex. TODO -- I was thinking IRT on wordbank). note: discuss both the other similar aggregation schemes have been helpful within the given topic -- childes, wordbank, peekbank, etc
+
+meta-analysis also misses individual and dyad level patterns -- a generative approach to understanding why people produce the types of referring expressions they do given previous discourse context needs the raw data to fit to. ~ mechanistic -ish (computational modeling)
+
+also a resource for future expt design -- can see what aspects of design may be more or less impactful, and may also choose stimuli that have desirable properties.
 
 Reference game data is rich for reuse as a it contains task-related natural language and copious amounts of it. Thus
 makes data reuse easier -- make some things possible that otherwise wouldn't have been 
@@ -166,9 +153,12 @@ makes data reuse easier -- make some things possible that otherwise wouldn't hav
 Aggregation enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. 
 and that the aggregation makes it more helpful for further fields -- an important first step for CS/AI benchmarking/applications or for task corpora in linguistics
 
-
+[peekbank talks more about replicability and reproducibility, but I'm not sure we need to here?]
+oh, but the uniform pipeline is true -- with the common format and especially redivis stuff, can do natural language processing and then apply to other datasets or more recent datasets that get added. 
 
 ## Here we ...
+
+TODO Consider a flow chart diagram a la peekbank fig 1: how data flows through our imports to redivis to APIs?
 
 Iterated reference games (IRGs) are a commonly used paradigm for studying adaptive language use, where people communicate about a set of potential referents. On each trial, one person, the \textit{describer}, has a specific designated target that they seek to communicate to the \textit{matcher(s)}. Across trials, targets are repeated so that the conversational history shapes the construction and understanding of later utterances (Fig 1). 
 
@@ -197,23 +187,60 @@ Third, Hawkins et al. (2020) found that the distribution of parts of speech in d
 
 ## Schema
 
+TODO schema image (from presentation?)
+
+the key unit in our schema is the trial, which we define as the actions associated with picking out one target image out of a pool of options. Each trial can be associated with messages -- speech acts or typed messages from describer and matchers, which are associated with the trial, who produced them, and what order they are in within the trial. Trials also have choice information -- who selected what option. 
+
+Trials contain information such as what game they were in, who the describer and matchers were, what the image set was, and when in the game they were, and what condition they were part of. We also label trials based on whether they were "ordering" or "matching" trials. In matching trials, a given target is specifically highlighted and the matcher picks one and then moves on. In ordering, the goal is to reproduce a given order of the set (or subset) of targets. We separate these into trials, but there is flexibility in that a matcher might revise their choice to one trial after later. TODO clarify!
+
+Datasets 
+
+Conditions
+
+Players for player demographic information where available 
+
+Images. We store these separately because some different papers use the same images. We include image files where we have them and link to another database (kilogram) where there is overlap. 
+
+TODO diagram of trial/block/stage for different expt designs 
+
 ### Processing 
+Depending on the study design and what types of data processing had already occurred, we recieved data in different formats. In some cases, where studies were conducted online, we recieved output from experiment software. In other cases, studies were done in person, and we either recieved audio recordings or transcriptions. 
+
+We transcribed things as needed; we aligned the transcript to the trial (which target) 
 dataset normalization / transcription / target coding / etc (where are the places where we had to make guesses)
+
+the completeness of the data also varied -- in some cases timing data and demographics were available, in others only a transcript was available, or only selection data. We have imported what we are given. 
 
 In here could discuss that this makes it not human subjects data b/c it doesn't have identifiers 
 
 criteria for inclusion / choices to record exclusions but not apply them 
+We imported trials from all games, including games that were excluded in the initial studies. We mark their exclusion status and reason, but allow uses of Refbank to impose their own uniform exclusion criteria. 
+
+along with the scripts used to import datasets, we have readmes including citation information, abstract, the key facts about the study design, and notes about any processing or ambiguities that occurred. 
+
+The processed data is not human subjects data because the choices and transcripts do not contain identifying information. Even basic demographics (gender, age in years, education level) are also not identifying. 
+
 
 ### Metadata coding 
+We code several meta-data factors as condition information. These include
+* the number of players in a game
+etc etc 
 
+in the condition table 
 
 ### Derivative measures 
 things like word count, sbert, pos, other stuff 
 discuss that for processing measures that include comparison across trials, need our own light exclusions 
 
+In addition to the key tables that are imported, we also run a pipeline to generate some derivative measures, including .... 
+
+In producing these measures, we apply our own light exclusions, requiring that the describer did produced descriptions, and that there are at least 2 "blocks" worth of trials for that game. 
+
 ## Current datasets
 (+ how solicitation happened)
 this is where a table of included datasets & vague properties could be helpful!
+To populate refbank, we started with datasets that had been collected by the authors, and that already had publicly posted data. We then sent emails soliciting data from people who published this type of study. 
+
 
 ## Using refbank
 
@@ -229,61 +256,42 @@ Shiny app / API / redivis versioning etc
 
 # Analyses
 
+As examples of analyses that are made easy by Refbank, we show a few analyses
+
+## Confirmation of common patterns
+
 ```{r}
-# source(here("code/get_data_for_mods.R"))
+
 ```
 
-
-Note: As a pilot to make sure we got the model specifications right (and that the models would run) we tested these on boyce2024 & hawkins2020. 
-
-All of these analyses are run only on "stage 1" data
+```{r}
+acc_mod <- read_rds(here(mod_loc, "acc_mod_log_rep.rds"))
+get_preds(acc_mod) |> write_rds(here(mod_loc, "predicted", "acc.rds"))
+```
 
 ```{r}
-scalar_pp_check <- function(mod, ndraws = 10) {
-  dv <- all.vars(formula(mod)$formula)[1]
 
-  newdata_small <- mod$data |>
-    filter(!is.na(.data[[dv]])) |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
-    ungroup()
-
-  obs <- newdata_small |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id")))) |>
-    summarize(mean_val = mean(.data[[dv]]), .groups = "drop")
-
-  pred_summary <- newdata_small |>
-    add_epred_draws(mod, ndraws = ndraws) |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".draw")))) |>
-    summarize(mean_pred = mean(.epred), .groups = "drop")
-
-  if ("log_rep_num" %in% names(newdata_small) && !"rep_num" %in% names(newdata_small)) {
-    pred_summary <- pred_summary |> mutate(rep_num = exp(log_rep_num))
-    obs <- obs |> mutate(rep_num = exp(log_rep_num))
-  }
-
+plot_preds <- function(df, dv){
+  df <- df |> filter(rep_num<=6)
   ggplot() +
     geom_line(
-      data = pred_summary,
+      data = df |> filter(!is.na(dataset_id)),
       aes(
         x = rep_num, y = mean_pred,
-        group = interaction(.draw, condition_id),
-        color = as.factor(condition_id)
+        group = interaction(condition_id),
       ),
-      alpha = 0.5
+      alpha = 0.2
     ) +
     geom_line(
-      data = obs,
-      aes(x = rep_num, y = mean_val, color = as.factor(condition_id)),
-      lty = "dashed"
-    ) +
-    geom_point(
-      data = obs,
-      aes(x = rep_num, y = mean_val, color = as.factor(condition_id))
-    ) +
-    facet_grid(.~ (as.numeric(condition_id) %% 5)) +
-    theme(legend.position = "none") +
-    labs(y = dv, x = "Repetition")
+      data = df |> filter(is.na(dataset_id)),
+      aes(x = rep_num, y = mean_pred),color="blue",
+      size=1) +
+    theme(legend.position = "none")
 }
+```
+
+```{r}
+read_rds(here(mod_loc, "predicted", "acc.rds")) |> plot_preds("Accuracy")+labs(y="Accuracy", x="Repetition Number")
 ```
 
 ## Accuracy
@@ -759,7 +767,7 @@ pp_check(to_next_mod)
 ```{r}
 scalar_pp_check(diverge_mod)
 
-pp_check(to_next_mod)
+pp_check(diverge_mod)
 ```
 
 # Discussion
