@@ -36,7 +36,10 @@ combined_conditions <- trials |>
 
 # apply exclusions
 
-valid_trials_misc <- trials |> filter(!exclusion_reason %in% c("describer didn't talk", "speaker typed nonsense"))
+valid_trials_misc <- trials |>
+  filter(!exclusion_reason %in% c("describer didn't talk", "speaker typed nonsense")) |>
+  left_join(conditions) |>
+  filter(!condition_label %in% c("expt1_new", "expt2_new", "expt3_new"))
 
 valid_trials_messages <- messages |>
   filter(role == "describer") |>
@@ -69,11 +72,18 @@ valid_games <- valid_trials |>
   ungroup() |>
   select(game_id, dataset_id, condition_id)
 
-valid_trials_games <- valid_trials |> inner_join(valid_games)
+valid_trials_games <- valid_trials |>
+  inner_join(valid_games) |>
+  group_by(target, game_id, dataset_id) |>
+  mutate(count = n()) |>
+  filter(count > 2) |>
+  ungroup()
+
 
 condition_info <- conditions |> select(condition_id, dataset_id, age_group = population, modality, feedback, backchannel, role_constancy)
 
 accuracy <- valid_trials_games |>
+  filter(!confederates == "yes") |> # decision is that talk to bot is fine for the talking side, not for the accuracy side
   left_join(choices) |>
   filter(!is.na(choice_id) & choice_id != "timed_out") |>
   mutate(correct = ifelse(choice_id == target, 1, 0)) |>
@@ -109,7 +119,6 @@ pos_summary <- pos |>
   select(-c(ADV, ADJ, ADP, AUX, CCONJ, SCONJ))
 
 
-
 stim_type <- images |> select(target = image_id, image_type, dataset_id)
 
 per_describer_for_model <- valid_trials_games |>
@@ -125,13 +134,21 @@ per_describer_for_model <- valid_trials_games |>
 
 
 to_next <- sbert |>
-  select(sim_type, condition_id, stage_num, dataset_id, sim, rep_num, earlier, later) |>
-  filter(sim_type == "to_next")
+  filter(sim_type == "to_next") |>
+  inner_join(valid_trials_games |> select(dataset_id, game_id, room_num, target, earlier = rep_num)) |>
+  inner_join(valid_trials_games |> select(dataset_id, game_id, room_num, target, later = rep_num)) |>
+  select(sim_type, condition_id, game_id, stage_num, dataset_id, sim, earlier, later)
 
-diverge <- sbert |>
+
+
+diverge_filter <- sbert |>
   filter(sim_type == "diverge") |>
+  inner_join(valid_trials_games |> select(dataset_id, room_num_1 = room_num, target, rep_num, game_id_1 = game_id)) |>
+  inner_join(valid_trials_games |> select(dataset_id, room_num_2 = room_num, target, rep_num, game_id_2 = game_id))
+
+diverge <- diverge_filter |>
   mutate(game_id = game_id_1) |>
-  bind_rows(sbert |> filter(sim_type == "diverge") |> mutate(game_id = game_id_2)) |>
+  bind_rows(diverge_filter |> mutate(game_id = game_id_2)) |>
   group_by(sim_type, game_id, target, condition_id, dataset_id, rep_num, stage_num) |>
   summarize(sim = mean(sim, na.rm = T))
 
