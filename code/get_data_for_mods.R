@@ -3,6 +3,7 @@ library(tidyr)
 library(dplyr)
 library(stringr)
 library(readr)
+library(here)
 # favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing")
 
 version <- "v12.3"
@@ -83,14 +84,14 @@ valid_trials_games <- valid_trials |>
 condition_info <- conditions |> select(condition_id, dataset_id, age_group = population, modality, feedback, backchannel, role_constancy)
 
 accuracy <- valid_trials_games |>
-  filter(!confederates == "yes") |> # decision is that talk to bot is fine for the talking side, not for the accuracy side
+  filter(confederates != "yes") |> # decision is that talk to bot is fine for the talking side, not for the accuracy side
   left_join(choices) |>
   filter(!is.na(choice_id) & choice_id != "timed_out") |>
   mutate(correct = ifelse(choice_id == target, 1, 0)) |>
   select(correct, trial_id, dataset_id, rep_num, stage_num, condition_id, option_size) |>
   left_join(condition_info) |>
   mutate(log_rep_num = log(rep_num)) |>
-  saveRDS("cached_model_files/data_for_mods/per_matcher_for_model.rds")
+  saveRDS(here("cached_model_files/data_for_mods/per_matcher_for_model.rds"))
 
 words <- messages |>
   inner_join(valid_trials_games) |>
