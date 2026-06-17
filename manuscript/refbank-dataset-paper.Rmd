@@ -326,7 +326,7 @@ Datasets vary ...
 TODO these tables need help! 
 
 ```{r}
-version <- "v12.3"
+version <- "v12.4"
 
 ### get data from redivis
 datasets <- get_datasets(version = version)
