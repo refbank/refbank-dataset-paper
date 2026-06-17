@@ -175,8 +175,7 @@ Relevant various places, but we should decide what the plots should be -- here i
 Language is used to communicate, and one of the flexible things about language is that it can be used to communicate about new concepts. ... One way convention formation and related language use phenomena are often studied is via iterated reference games (introduced by CITE Krauss and popularized by CITE Clark). 
 
 ## What are ref games?
-Iterated reference games are a commonly used paradigm for studying adaptive language use. A *reference game* consist of a set of people communicating with each other about a set of potential referents. One person, the *describer*, has a specific designated target (usually pre-identified as the target by the experimenter) that they seek to communicate to the *matcher* (or matchers). This act of reference requires coordination between describer and matcher on a symbol--meaning alignment. *Iterated* reference games involve repeated reference to the same targets within the same group of people, so that a certain conversational history builds up that could shape the construction and understanding of later symbols. 
-
+Iterated reference games are a commonly used paradigm for studying adaptive language use. A *reference game* consists of a group of people communicating with each other about a set of potential referents. One person, the *describer*, has a specific designated target (usually pre-identified as the target by the experimenter) that they seek to communicate to the *matcher* (or matchers). This act of reference requires coordination between describer and matcher on a symbol--meaning alignment. *Iterated* reference games involve repeated reference to the same targets within the same group of people, so that a certain conversational history builds up that could shape the construction and understanding of later symbols. 
 
 Communicative acts serve a variety of purposes, but a simple, yet central one is reference: connecting a symbol with a meaning to pick out a target. This is a subgoal needed for more complex acts -- it's hard to tell a story or debate someone without agreement on what different words or phrases refer to. 
 
@@ -199,25 +198,20 @@ Different studies analyse different outcomes, but a few patterns are commonly fo
 
 * when data is rich and reusable, (like here), harmonization allows both for mega-analysis (~ meta-analysis), and new analyses that wouldn't have been possible. 
 
-Often when there is a large literature of studies on the same topic or using the same paradigm, a meta-analysis is used to aggregate their results. However, the iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Statistical results would also miss some of the richness of the data because language data is really rich or something. 
+As reviewed above, different researchers have used IRGs with different setups and settings as a measure of communication. The breadth of studies in this domain presents an opportunity for evidence synthesis to understand various phenomena related to convention formation across different samples and experimental designs. In particular, there are a number of dimensions of variation in experimental design across IRGs, including different stimuli choices, different numbers of options, and different sizes and structures of groups. Running a new experiment across all these options would be expensive, so aggregating existing data provides a way to increase what we can learn from the data we already have, and allow for more pinpointed studies in the future. 
+
+One common approach for evidence synthesis is meta-analysis; however, the IRG literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Additionally, language data of the kind generated in IRGs are very rich and amenable to many different possible analyses, which may not be captured by simple statistical aggregation.
 
 TODO we should cite the weird paper that was like a sysrev of iterated ref games but wasn't very good 
 
-There are a number of dimensions of variation in reference games, including different stimuli choices, different numbers of options, and different sizes and structures of groups. Running a new experiment across all these options would be expensive, so aggregating existing data provides a way to increase what we can learn from the data we already have, and allow for more pinpointed studies in the future. 
+Another form of aggregation is to collect raw data collected from similar paradigms and align them in a shared framework for mega-analysis. This approach enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible, thereby presenting several benefits. First, new analytic approaches can be used on the data -- including approaches that may not have been available when some data was originally collected (ex. semantic vector embeddings), or approaches that rely on cross-study data (ex. TODO -- I was thinking IRT on wordbank). note: discuss both the other similar aggregation schemes have been helpful within the given topic -- childes, wordbank, peekbank, etc
 
-Another form of aggregation is to collect raw data collected from similar paradigm and align it in a shared framework for mega-analysis. In this approach, new analytic approaches can be used on the data -- including approaches that may not have been available when some data was originally collected (ex. semantic vector embeddings), or approaches that rely on cross-study data (ex. TODO -- I was thinking IRT on wordbank). note: discuss both the other similar aggregation schemes have been helpful within the given topic -- childes, wordbank, peekbank, etc
+Second, mega-analysis retains individual- and dyad-level patterns; this feature allows for the analysis of individual differences, as well as generative and computational approaches to understanding referential communication in IRGs, which require raw data to compare against. For example, IRGs can be used to assess the extent to which language models are able to communicate like humans, and actual trial-by-trial data are the most useful for such comparisons [CITE]. 
 
-meta-analysis also misses individual and dyad level patterns -- a generative approach to understanding why people produce the types of referring expressions they do given previous discourse context needs the raw data to fit to. ~ mechanistic -ish (computational modeling)
+Third, data aggregation allows for data reuse for purposes other than analysis. In particular, IRG data can serve as a resource for future experiment design -- they can shed light on what aspects of design may be more or less impactful, and may also allow for the selection of stimuli that have desirable properties. Aggregation can also highlight underexplored regions of the experiment design space, suggesteing new avenues for IRG research.
 
-also a resource for future expt design -- can see what aspects of design may be more or less impactful, and may also choose stimuli that have desirable properties.
 
-Reference game data is rich for reuse as a it contains task-related natural language and copious amounts of it. Thus
-makes data reuse easier -- make some things possible that otherwise wouldn't have been 
 
-Aggregation enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. 
-and that the aggregation makes it more helpful for further fields -- an important first step for CS/AI benchmarking/applications or for task corpora in linguistics
-
-[peekbank talks more about replicability and reproducibility, but I'm not sure we need to here?]
 oh, but the uniform pipeline is true -- with the common format and especially redivis stuff, can do natural language processing and then apply to other datasets or more recent datasets that get added. 
 
 IRGs are widely used to study convention formation, with each experiment manipulating a small set of possible experimental design variables. Nevertheless, the underlying language data (and associated metadata) from IRGs constitute a high value corpus for studying not only convention formation, but also audience design, metaphor, semantic and syntactic alignment, and referring expressions; they can also be used as a benchmark for NLP models of pragmatics. 
@@ -226,7 +220,7 @@ IRGs are widely used to study convention formation, with each experiment manipul
 
 TODO Consider a flow chart diagram a la peekbank fig 1: how data flows through our imports to redivis to APIs?
 
-To enable to reuse of iterated reference game datasets, we present Refbank, an open reposity of iterated reference game data. So far, Refbank has TODO STATS about how we have so much data, wow. 
+To enable to reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. So far, Refbank has TODO STATS about how we have so much data, wow. 
 
 In the following sections, we explain the process for adding datasets to refbank, what the schema is and what information is stored, how researchers can access refbank, and we show some example analyses on refbank data. 
 
@@ -237,12 +231,12 @@ In the following sections, we explain the process for adding datasets to refbank
 
 ## Data description 
 
-
 For the purposes of Refbank, we define iterated reference games as studies where ... in at least some of the conditions, the same stimuli are repeated... 
 
 (format and processing)
 
-Our database consists of a set of linked tables, each tracking one set of data (see figure whatever), and cross-linking to other tables as needed. 
+Our database consists of a set of linked tables, each tracking one set of data (see figure whatever), and cross-linking to other tables as needed. <- maybe just say that Refbank is structured as a relational database?
+
 ## Schema
 
 ```{r interface, fig.env = "figure", fig.pos = "t!", out.width="\\textwidth", fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "TODO", cache=FALSE}
@@ -267,7 +261,7 @@ Images. We store these separately because some different papers use the same ima
 TODO diagram of trial/block/stage for different expt designs? 
 
 ### Processing 
-Depending on the study design and what types of data processing had already occurred, we recieved data in different formats. In some cases, where studies were conducted online, we recieved output from experiment software. In other cases, studies were done in person, and we either recieved audio recordings or transcriptions. 
+Depending on the study design and what types of data processing had already occurred, we received data in different formats. In some cases, where studies were conducted online, we received output from experiment software. In other cases, studies were done in person, and we either received audio recordings or transcriptions. 
 
 We transcribed things as needed; we aligned the transcript to the trial (which target) 
 dataset normalization / transcription / target coding / etc (where are the places where we had to make guesses)
@@ -290,9 +284,9 @@ We code several meta-data factors as condition information. These include
 * partner constancy or whether or not the same set of people is active the entire game. If there are changes in who is interacting, there is not partner constancy. 
 * role constancy: roles are constant if each player is only the describer or a matcher when they are active; roles are not constant if a matcher becomes a describer or vice versa. 
 * backchannel: designs vary on how the matchers may communicate with the describer. We break this up into 3 levels: full if there are no restrictions on communication (within the modality), limited if there is some communication (example, if only one message can be sent), and none if there is no communication channel from matcher to describer. 
-* feedback: we use "feedback" to refer to information players recieve on the correctness of their selections from the experimenters. In full feedback, after each trial, players learn if the selection(s) were correct or incorrect and what the correct target was. In limited feedback, there is some correctness feedback, but it doesn't include what the correct target was, or is provided after every repetition, perhaps as a total correct. In no feedback, players recieve no feedback during the game. 
+* feedback: we use "feedback" to refer to information players receive on the correctness of their selections from the experimenters. In full feedback, after each trial, players learn if the selection(s) were correct or incorrect and what the correct target was. In limited feedback, there is some correctness feedback, but it doesn't include what the correct target was, or is provided after every repetition, perhaps as a total correct. In no feedback, players recieve no feedback during the game. 
 * modality: We code the communication modality into three levels: oral-in-person when the participants are talking and physically in the same room, whether or not they have visual access to each other; oral-remote when the participants are talking over some sort of connection (audio signal between phone booths, headsets in separate fmri machines, etc). We use written when the messages are typed, like via a chat box. 
-* confederates: we include an option for noting if one or more of the participants was not a "real" participant -- i.e. was an experimentor or a bot. While some confederate designs exist in the literature, especially around atypical neuro population, we have only one condition where it is relevant: one condition of hawkins2019 where players talked to a bot. Because the describer is a real participant, we include this in refbank (a reverse condition where a bot describers to a human was excluded). Iterated reference games involving some AI agents are a topic of recent study, and Refbank is ready to include those studies, and also mark them so then can be treated separately or excluded as appropriate for the research goals. 
+* confederates: we include an option for noting if one or more of the participants was not a "real" participant -- i.e. was an experimenter or a bot. While some confederate designs exist in the literature, especially around atypical neuro population, we have only one condition where it is relevant: one condition of hawkins2019 where players talked to a bot. Because the describer is a real participant, we include this in refbank (a reverse condition where a bot describers to a human was excluded). Iterated reference games involving some AI agents are a topic of recent study, and Refbank is ready to include those studies, and also mark them so then can be treated separately or excluded as appropriate for the research goals. 
 * whatever we called familiarity: another possible source of design variation is whether the pair or group of participants have prior history with each other, which could shape their interactions and convention formation. In some cases, the populations were mixed, either with an explicit balance between familiar pairs or stranger pairs, or because the recruitment pool included some classmates and some strangers. 
 * TODO were there any other categories? 
 
@@ -496,7 +490,7 @@ The refbank data is stored on redivis, which is ... . A redivis account can be m
 
 There are several ways of interacting with the Refbank data. We recommend using the shinyapp for quick visualizations and exploration of moderators or different datasets (redivis.stanford.edu). For analysing data, the data tables can be downloaded using `refbankr` a custom R package, or via the redivis API for Python. `refbankr` functions can be used to pull any set of datasets, any version, and also to pull only a certain number of rows for checking. Documentation is at ... 
 
-Redivis has built in ways of filtering, exploring, and downloading data, via it's viewers and workflow creation, where a chain of SQL transforms, and R and Python notebooks can be used to process data. Redivis allows for the creation of workflows that pull from datasets, and for SQL-type queries over datasets. Redivis APIs are well documented. 
+Redivis has built in ways of filtering, exploring, and downloading data, via its viewers and workflow creation, where a chain of SQL transforms, and R and Python notebooks can be used to process data. Redivis allows for the creation of workflows that pull from datasets, and for SQL-type queries over datasets. Redivis APIs are well documented. 
 
 Different workflows support different possible uses including scientific research and training. The API format makes them useable including in larger pipelines and is compatible with coding agents (cite anthropic ? maybe not). 
 
