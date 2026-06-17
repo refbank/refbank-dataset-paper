@@ -37,6 +37,7 @@ classoption: man
 csl: apa7.csl
 header-includes:
 - \usepackage{setspace}\singlespacing
+- \usepackage{makecell}
 - \setlength{\parskip}{0pt}
 shorttitle: Refbank
 ---
@@ -45,7 +46,7 @@ shorttitle: Refbank
 knitr::opts_chunk$set(
   fig.width = 6, fig.height = 3, fig.crop = F,
   fig.pos = "tb", fig.path = "figs/",
-  echo = F, warning = F, cache = T,
+  echo = F, warning = F, cache = F,
   message = F, sanitize = T
 )
 
@@ -58,6 +59,7 @@ library(ggthemes)
 library(kableExtra)
 library(tidybayes)
 library(cowplot)
+library(refbankr)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 theme_set(theme_bw())
@@ -92,7 +94,9 @@ form <- function(model_form) {
   ind <- as.character(model_form$formula[3])
 
   str_c(dep, " ~ ", ind) |>
-    str_replace_all(" ", "") |>
+        str_replace_all(" ", "") |>
+    str_replace_all("_id", "") |> 
+    str_replace_all("_", " ") |> 
     str_replace_all("\\*", " $\\\\times$ ") |>
     str_replace_all("\\+", "&nbsp;+ ") |>
     str_replace_all("~", "$\\\\sim$ ")
@@ -145,18 +149,26 @@ plot_preds_pos <- function(df, dv){
 
 # TODO list
 
-* waiting for dataset re-version to run 
 * re-run all models (not that things will change much)
 * confirm that dataset summary looks okay and that dataset inclusions look okay
 * fix accuracy prediction plot -- should make sure the overall prediction line has some reasonable number of trials
 
 * clean up model formula writing 
 
-* too many things on tables -- how to get widths in check?
-
 * what do to about reduction moderators ... we just have too many variables and conditions?
 
+* figure out what floats we want
+Relevant various places, but we should decide what the plots should be -- here is shown with model fits, both with per condition ranef and with overall (+95% CI).
 
+* deal with refs/citations
+
+* fix inconsisistent al versus al. in dataset refs
+* clean up intro
+* clean up "methods"/description
+* clean up analyses
+* write discussion
+* write abstract
+* write title?
 
 # Intro
 
@@ -320,7 +332,7 @@ Datasets vary ...
 TODO these tables need help! 
 
 ```{r}
-version <- "v12.2"
+version <- "v12.3"
 
 ### get data from redivis
 datasets <- get_datasets(version = version)
@@ -361,7 +373,9 @@ dataset_features <- condition_summary |>
     role_constancy=="no, yes" ~ "mixed",
     role_constancy=="no" ~ "X",
     role_constancy=="yes" ~ ""
-  )) |> 
+  ),
+  feedback=str_replace(feedback, "limited", "ltd"),
+backchannel=str_replace(backchannel, "limited", "ltd")) |> 
   select(-dataset_id)
 
 game_length <- condition_summary |>
@@ -393,28 +407,36 @@ game_length <- condition_summary |>
 
 
 data_features_all <- dataset_features |>
-  left_join(game_length) |> 
+  #left_join(game_length) |> 
+      mutate(short_cite = str_replace_all(short_cite, "&", "\\\\&")) %>%
   select(Paper=short_cite, 
-         Languange=language, 
-         `Group size`=group_size,
-         `Option set size`=option_set_size,
-         `Trials / game` = trials_per_game,
-         `Repetitions / game` = reps_per_game,
+         Language=language, 
+         Modality=modality,
+        # `Group size`=group_size,
+        # `Option set size`=option_set_size,
+         #`Trials / game` = trials_per_game,
+         #`Repetitions / game` = reps_per_game,
          `Role switch`=switch_role,
          `Partner switch`=switch_partner,
-         modality,
-         feedback,
-         backchannel,
-         population
+         `Feedback?`=feedback,
+         `Backchannel?`=backchannel
          )
   
+# not sure what is how important ... 
+
+# removing Trials/game for now 
   data_features_all |>
    knitr::kable(
      format = "latex",
      booktabs = TRUE,
+     escape=F,
      linesep = "",
-     caption = "Design features of each dataset. ",
-    align=c("l", "r","r", "r", "r")
+     caption = "Design features of each dataset. 'ltd' is used as an abbrevation of 'ltd'. Multiple values indicate that conditions varied within the data",
+     col.names = linebreak(c("Paper", "Language", "Modality", 
+                             "Role\nswitch", "Partner\nswitch","feedback", "backchannel"
+                             ), align
+  = "c"),
+    align=c("l", "l","l",  "l",  "l", "l")
    ) |>    kable_styling(font_size = 9)
 
 
@@ -427,36 +449,42 @@ data_quantity <- condition_summary |>
   group_by(dataset_id, short_cite) |>
   summarize(
     across(starts_with("total"), sum)
-  ) |>
-  select(-total_num_selections) |>
-  ungroup() |>
+  ) |>  ungroup() |>
   select(
     Paper = short_cite, Games = total_num_games, Players = total_num_players,
-    Trials = total_num_trials, Words = total_num_words
+    Trials = total_num_trials, Words = total_num_words, total_num_selections
   )
 
 totals <- data_quantity |> summarize(
   across(c("Games", "Players", "Trials", "Words"), sum) |> mutate(Paper = "Total")
 )
 
-data_quantity_total <- data_quantity |> arrange(desc(Games)) |> bind_rows(totals)
+data_quantity_total <- data_quantity |> arrange(desc(Games)) |> bind_rows(totals) |> left_join(game_length |> rename(Paper=short_cite)) |> select(-dataset_id) |> 
+  left_join(dataset_features |> select(Paper=short_cite, `Group size`=group_size,
+         `Option set size`=option_set_size)) |> 
+  select(-total_num_selections) |> 
+  mutate(across(c(trials_per_game, reps_per_game, `Group size`, `Option set size`), \(x) ifelse(is.na(x), "", x)))
 
 
  data_quantity_total |>mutate(across(where(is.numeric), \(x) format(x, big.mark = " ", scientific = FALSE))) |>
+         mutate(Paper = str_replace_all(Paper, "&", "\\\\&") |> 
+                  str_replace_all(fixed("al ("), "al. (")) %>%
    knitr::kable(
      format = "latex",
      booktabs = TRUE,
+     escape=F,
      linesep = "",
-     caption = "Amount of data from each dataset. ",
-    align=c("l", "r","r", "r", "r")
+     caption = "Amount of data from each dataset, and the amount of data per game in each dataset. Ranges indicate that the value varied across conditions within the dataset. Option set sizes in parentheses indicate that a minority of trials has this other option set size. ",
+     col.names = linebreak(c("Paper", "Total\ngames", "Total\nplayers", "Total\ntrials","Total\nwords", "Trials/\ngame" ,"Reps/\ngame", "Group\nsize", "Option\nset size"), align = "c"),
+    align=c("l", "r","r", "r", "r", "r", "r", "r", "r")
    ) |>
    kableExtra::row_spec(
      19,
      extra_latex_after = "\\midrule"
-   ) |> 
-   column_spec(3, width = "2cm") |> 
-      column_spec(4, width = "2cm") |> 
-   column_spec(5, width = "2cm")
+   ) |>
+    kable_styling(font_size = 9) |>   column_spec(1, border_right = TRUE) |>column_spec(5, border_right = TRUE)
+
+
 
 ```
 
@@ -479,11 +507,12 @@ Different workflows support different possible uses including scientific researc
 As examples of analyses that are made easy by Refbank, we show a few analyses. For these analyses, we only considered games with at least 2 repetitions of data and targets that were referred to at least 3 times during the game. 
 One goal of Refbank is to enable the study of moderators and generalizations of phenomena observed in IRGs. 
 
+We also restrict to the first stage of each experiment; this is the part of the experiment before any changes in partners or the set of stimuli being used. Thus, for datasets like cite partners to populations, even though the overall design has games of 4 people interacting as a network of pairs, for the first stage, each game can be treated as two independent pairs. Similarly, games that eventually switch for a new set of stimuli look like typical games without stimuli swaps for the repetitions before that happens. 
+
+While the effects of partner or stimuli changes may be of interest, and are something that could be studied using Refbank, they introduce difficult to model discontinuities. For these analyses, we limit to "stage 1" data from each experiment because this is more directly comparable and does not have discontinuities in the experience. 
 These can be thought of as mega-analyses, an equivalent of meta-analyses where the raw data are used, but dataset- and condition- level effects are taken into account in a mixed effect model. 
 
-## Confirmation of common patterns
-
-```{r}
+```{r accred, fig.width=6, fig.height=3, fig.cap="TODO"}
 acc_plot <- read_rds(here(mod_loc, "predicted", "acc_mod_log_rep.rds")) |> plot_preds("Accuracy")+labs(y="Accuracy", x="Repetition Number")
 
 red_plot <- read_rds(here(mod_loc, "predicted", "red_mod_log_log.rds")) |> mutate(across(c("mean", "low", "high"), exp)) |> plot_preds("Reduction log lin")+labs(x="Repetition Number")
@@ -493,20 +522,27 @@ plot_grid(acc_plot, red_plot)
 
 ## Accuracy
 
+```{r}
+#data_quantity |> filter(total_num_selections>0) |> View()
+
+#read_rds(here("cached_model_files/data_for_mods/per_matcher_for_model.rds")) |> group_by(dataset_id) |> tally()
+```
+
+
 A common finding across iterated reference games is that players are usually quite accurate at communicating and selecting the correct targets -- that is, they succeed at reference. When participants are not at ceiling initially, they tend to improve rapidly over repetition. A high level of accuracy is taken as a pre-condition for interpreting the language data as being a sign of conventionalization. 
 
-Not all datasets included accuracy data on the trial level, so these results come from the TODO where we did have selection data how many datasets, how many trials
+Not all datasets included accuracy data on the trial level, so these results come from the TODO N datasets (TODO N trials) where selection data was available. 
 
 ```{r}
 acc_stats <- read_rds(here(mod_loc, "summary", "acc_mod_log_rep.rds")) |> mutate(across(c("Estimate", "lower", "upper"), exp))
 
 acc_form <- read_rds(here(mod_loc, "formulae", "acc_mod_log_rep.rds"))
 ```
-To aggregate across datasets, we ran a mixed-effect logistic regression model `r form(acc_form)`. The fitted results are shown in Figure TODO. 
-Accuracy is generally high to start with, but also increases over repetitions (Odds ratio of one log-rep-num later `r stats_text(acc_stats, 2)`). 
+To aggregate across datasets, we ran a mixed-effect logistic regression model `r form(acc_form)`. The fitted results are shown in Figure \ref{fig:accred}A. Consistent with previous findings, accuracy is generally high to start with, but also increases over repetitions (Odds ratio of one log-rep-num later `r stats_text(acc_stats, 2)`). 
 
 ## Reduction
 
+A very consistent finding across many iterated reference games is that the amount of language used in descriptions declines across repetitions. However, while the trend is frequently observed, the specific mechanisms are not known, and the functional relationship between repetition and quantity of words has not been firmly established. CITE powerlaw paper compares some fit and some other fit on two datasets. While there are many possible functional relationships, here we consider four options in order to determine what general type of shape fits the data best. By using a larger number of datasets that vary in different ways, we avoid overfitting to the pecularities of any one dataset. 
 
 ```{r, eval=F}
 loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
@@ -524,24 +560,25 @@ loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, lin_log
 loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
 
 #loo_compare(list(log_log = loo_log_log, log_lin = loo_log_lin))
+
+
 ```
 
-One question is what functional form relationship best describes the change in number of words over repetitions. CITE whoever says that it should be a power-law, and looks at N datasets. Here, we use refbank, which has more datasets, and consider 4 options for functional form -- log or raw scale words and log or raw scale repetition number. We found that the best fitting model was log(words)~log(rep), but it was only slightly better than log(words)~rep (elpd difference of: `r loo_comparison[2,1]`). Models with a linear number of words were much worse (elpd differences of `r loo_comparison[3,1]` and `r loo_comparison[4,1]`). 
+We consider relationships between repetition and words on either the raw or log scales for each. For each model we included mixed effects (ex: TODO I didn't run formulae on these!) We found that the best fitting model was log(words)~log(rep), but it was only slightly better than log(words)~rep (elpd difference of: `r loo_comparison[2,1]`). Models with a linear number of words were much worse (elpd differences of `r loo_comparison[3,1]` and `r loo_comparison[4,1]`). See Figure TODO. 
 
 
 <!-- ### Main effect of rep num  -->
 
-There's a question of what the correct functional form is for the words ~ rep_num relationship. We fit 4 options -- the full 2x2 of log or raw words x log or raw rep num. 
 
 ```{r}
 red_stats <- read_rds(here(mod_loc, "summary", "red_mod_log_log.rds")) 
 ```
 
-There is a substantial decrease in the number of words over repetitions (a change of `r stats_text(red_stats, 2)` log-words per log-rep-num). 
+Using the best fitting log-log model, we confirm the common finding that there is a substantial decrease in the number of words over repetitions (a change of `r stats_text(red_stats, 2)` log words per log repetition number). 
 
 
 
-## Reduction Moderators
+## Reduction Moderators -- not sure what to do here...everything overlaps 0 just so much!
 
 Two possible approaches to moderators. 
 
@@ -614,7 +651,8 @@ log_log_pred <- read_rds(here(mod_loc, "summary", "log_log_pred.rds"))
 ```
 
 
-## PoS
+## Distribution of parts of speech
+
 ```{r, eval=F}
 
 tibble(log_rep_num = c(log(1), log(6)),
@@ -633,13 +671,17 @@ tibble(log_rep_num = c(log(1), log(6)),
 
 ```{r}
 pos_stats <- read_rds(here(mod_loc, "summary", "pos_prob_scale.rds")) |> rename(Estimate=diff, lower=.lower, upper=.upper, Term=.category)
+
+pos_form <- read_rds(here(mod_loc, "formulae", "pos_log_mod.rds"))
 ```
 
-From the first to sixth rep, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decreasing (`r stats_text(pos_stats,6)`). Other categories remain relatively constant in proportion. actually verbs and dets decrease slightly, but range includes 0, modifier is pretty constant. 
+The distributions of words and phrases used in descriptions changes as conventionalization occurs. For instance, definite or bare noun phrases may increase compared to indefinites, and more holistic or metaphorical descriptions may become more common relative to literal, shape-based, or part-based descriptions [CITATIONS]. As as illustration of how Refbank and NLP pipelines can be used to scale up reference game analyses, we focus on the change in the distribution of parts of speech. CITE HAWKINS 2020 found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. We are able to scale up this analysis to all the monolingual datasets in Refbank. We use Stanza to parse ... these parses, including full dependency parses are avaialble as derived tables in refbank. TODO 
 
-Third, Hawkins et al. (2020) found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. In Refbank, this trade-off between nouns and closed-class words only occurs for datasets in the online written paradigm; in spoken experiments, nouns increase, but at the expense of verbs. We speculate that the ease of producing closed-class words may be modality-dependent, where it's easier to type telegraphic messages and easier to speak fluent descriptions with (phonologically reduced) closed-class items. This analysis illustrates how combining datasets allows for novel discoveries that can spur future research.
+For this analysis, we lump parts of speech into 6 coarse grained categories: nouns, verbs, modifiers (adjectives and adverbs), pronouns, determiners, and function words (adpositions, conjunctions, etc). We ran a mixed effects multinomial model with pronoun as the reference class, weighting each trial equally: `r form(pos_form)`. 
+According to the model predictions, from the first to sixth repetition, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decrease in frequency (`r stats_text(pos_stats,6)`). Other categories were less consistent. ( relatively constant in proportion. actually verbs and dets decrease slightly, but range includes 0, modifier is pretty constant. ) The model predicted results are shown in Figure \ref{fig:pos}. 
 
-```{r}
+
+```{r pos, fig.width=6, fig.height=3, fig.cap="Distribution in parts of speech over repetitions. Colored lines and ribbons are the predictions and 95%CrI from the model; faint lines are per-condition model predictions."}
 
 
 read_rds(here(mod_loc, "predicted", "pos_log_mod.rds")) |>rename(pos=.category) |> 
@@ -654,30 +696,30 @@ read_rds(here(mod_loc, "predicted", "pos_log_mod.rds")) |>rename(pos=.category) 
 
 
 ```
-We have PoS data for all monolingual corpora.
 
 
 ## Semantic embedding similiarities
 
-Relevant various places, but we should decide what the plots should be -- here is shown with model fits, both with per condition ranef and with overall (+95% CI).
 
 ```{r}
 to_next_stats <- read_rds(here(mod_loc, "summary", "to_next_mod.rds"))
 diverge_stats <- read_rds(here(mod_loc, "summary", "diverge_mod.rds"))
 
+to_next_form <- read_rds(here(mod_loc, "formulae", "to_next_mod.rds"))
+diverge_form <- read_rds(here(mod_loc, "formulae", "diverge_mod.rds"))
+
 ```
 
-One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in some semantic vector space and then look at distance metrics like cosine similarity. Here, as part of our processing pipeline, we run all descriptions through TODO what thing that wasn't SBERT did we use and then take cosine similarities between relevant pairs. 
+One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in a semantic vector space and then quantify similarities of pairs of descriptions using cosine similarity or another distance metric (cite other uses of this). As part of the refbank processing pipeline, we embed all descriptions using TODO then calculate cosine similarities between relevant pairs of descriptions to measure how the semantic distances of descriptions change across repetition number. This embedding framework is multilingual, and we use it on all datasets. 
 
-Within a game, the similarity between descriptions in adjacent repetitions is an index of convention formation -- with high similarity the descriptions are stable and not changing very much. Similarity to the next round description increases over repetition (per log-rep-num:`r stats(to_next_stats, 2)`)
+TODO cite previous work (aka us, but maybe also others) about using semantic vectors for similarity. 
+Within a game, the similarity between descriptions to the same target in adjacent repetitions is an index of convention formation. When there is low similarity, descriptions are changing, but when there is high similarity the target to description mapping has stabilized. To test for stabilization of descriptions, we ran a mixed effects ordered beta regression model `r form(to_next_form)` (cite this type of model ex: https://osf.io/preprints/socarxiv/2sx6y_v1). In this model, the similarity between a description and the corresponding description in the next repetition increases over repetitions by `r stats_text(to_next_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}A.
 
-TODO we do need to give model spec somewhere!
+TODO cite previous work (aka us, but maybe also others) about using semantic vectors for dissimilarity. 
+As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another. Vector semantics is also used to test for this divergence (CITATIONS). To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same repetition and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B.
 
-Second, Hawkins et al. (2020) and Boyce et al. (2024)  found that descriptions from adjacent repetitions become more similar in later repetitions. Refbank confirms that this observation holds across datasets and reveals that the convergence is stronger when the describer is constant across repetitions (Fig 3). 
 
-Similarity to descriptions from other games decreased  over repetition (per log-rep-num:`r stats(diverge_stats, 2)`)
-
-```{r, fig.width=6, fig.height=3, fig.cap="TODO"}
+```{r vectorsem, fig.width=6, fig.height=3, fig.cap="Cosine similarities between a description and the next repetition description from the same game (A) or descriptions from the same repetition and different games (B). Blue line shows the overall model prediction and 95% CrI, faint lines show per-condition predictions. "}
 
 
 to_next_plot <- read_rds(here(mod_loc, "predicted", "to_next_mod.rds")) |> filter(rep_num<6) |>  plot_preds("Reduction log lin")+labs(x="Repetition Number",y="Cosine similarity")+coord_cartesian(ylim=c(.5, 1), xlim=c(1,5))+labs(title="Within groups")
@@ -688,12 +730,6 @@ diverge_plot <- read_rds(here(mod_loc, "predicted", "diverge_mod.rds"))  |>  plo
 plot_grid(to_next_plot, diverge_plot, labels="AUTO")
 
 ```
-
-We now have multilingual embeddings for all corpora. We look at the similarity to the next rep (same game, same target) as a measure of within game similiarity. We look at the cross-game (same condition, same target, same rep) dissimilarity. 
-
-The fit shown here isn't great and we are currently running with log_rep_num instead. If that looks better, we will switch to that. 
-
-
 
 # Discussion
 summary of what we did and results
