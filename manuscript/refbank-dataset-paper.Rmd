@@ -147,29 +147,6 @@ plot_preds_pos <- function(df, dv){
 
 ```
 
-# TODO list
-
-* re-run all models (not that things will change much)
-* confirm that dataset summary looks okay and that dataset inclusions look okay
-* fix accuracy prediction plot -- should make sure the overall prediction line has some reasonable number of trials
-
-* clean up model formula writing 
-
-* what do to about reduction moderators ... we just have too many variables and conditions?
-
-* figure out what floats we want
-Relevant various places, but we should decide what the plots should be -- here is shown with model fits, both with per condition ranef and with overall (+95% CI).
-
-* deal with refs/citations
-
-* fix inconsisistent al versus al. in dataset refs
-* clean up intro
-* clean up "methods"/description
-* clean up analyses
-* write discussion
-* write abstract
-* write title?
-
 # Intro
 
 Language is used to communicate, and one of the flexible things about language is that it can be used to communicate about new concepts. ... One way convention formation and related language use phenomena are often studied is via iterated reference games (introduced by CITE Krauss and popularized by CITE Clark). 
@@ -237,7 +214,39 @@ For the purposes of Refbank, we define iterated reference games as studies where
 
 Our database consists of a set of linked tables, each tracking one set of data (see figure whatever), and cross-linking to other tables as needed. <- maybe just say that Refbank is structured as a relational database?
 
-## Schema
+## Core tables
+The core information in our dataset is stored in three tables: Trials, Messages, and Choices. Thethe key unit in our schema is the trial, which we define as the actions associated with picking out one target image out of a pool of options. Each trial can be associated with messages -- speech acts or typed messages from describer and matchers, which are associated with the trial, who produced them, and what order they are in within the trial. Trials also have choice information -- who selected what option. 
+
+Trials contain information such as what game they were in, who the describer and matchers were, what the image set was, and when in the game they were, and what condition they were part of. We also label trials based on whether they were "ordering" or "matching" trials.  TODO clarify!
+
+We include dataset_id in every table for easier filtering
+
+### Trials
+Each row in the Trials table contains information about a single trial. Each trial has a unique ID used to cross-link with other tables. Each trial has information on what was happening that trial and how it fits into the larger structure of a game. 
+
+Each trial is associated with a describer and a list of matchers via their player ids. Each trial has a target and a set of image options, linked via their image ids. 
+
+Each trial is labelled as either an "order" trial or a "match trial". In matching trials, a given target is specifically highlighted and the matcher picks one and then moves on. In ordering, the goal is to reproduce a given order of the set (or subset) of targets. We separate these into trials, but there is flexibility in that a matcher might revise their choice to one trial after later.
+
+The basic structure of an iterated reference game is a series of trials (acts of picking out different targets) that are nested within repetitions through the target set (sometimes called blocks or rounds). We number trials starting from 1 across reps and reps starting from 1. 
+
+Some game designs have more complications. 
+There is not a separate game table, but each trial is nested within a game. Each game is a set of people who play with each other, possibly on a network of interlocking pairs or with substitutions (see metadata). Following @hawkins whatever, we include a room number for when there are two trials going on in parallel in the same game (this occurs on network games where two pairs play and then swap). 
+
+If there is a change in how the game is working, such as a swap in partners, or in the pool of stimuli, we define that as a new stage, recorded via the stage number. For instance, the network swap games have multiple stages, partner swap designs have multiple stages, and some games with entrainment and test phases are multi-stage and games with a separate "generalization" round have multiple stages. 
+
+In general, restricting to "stage 1 data" (as is possible in the shiny app and via filtering downloaded data) allows for a more even comparison across games. 
+
+While the trials table includes information about the set up of the trial, the actual content of trial consists of two kinds of actions: messages and choices. 
+
+### Messages
+Each message is one turn of dialogue or one message that was typed in a chat window, depending on the game modality. A message has text, the content of the message, and is associated with a player_id, who produced the message.  Messages are also associated with the player's role (either matcher or describer). All messages have a trial id (linking to the trials table), and Within a trial, messages are given a message number defining their sequential order. There is a field, message_irrelevant, to preserve labels about off-topic messages (for example chit chat or meta-discussion about strategy). There is also a time_stamp field for when the timing of a message within a trial is known. 
+We do not remove off-topic messages, or trim messages with some extraneous content, but we do use spelling-corrected versions of written messages where available. 
+
+### Choices
+The other type of information is about what a player selects, which is recorded in a choices table. Each choice is tied to a given trial and a given player_id.  Each choice is associated with a selected target denoted with choice_id that matches the image_id (and can be compared with the trials target_id). There is again the option for a time-stamp to specify how long into the trial the selection was made. 
+
+In order games, we only record the final choices players made for each position. 
 
 ```{r interface, fig.env = "figure", fig.pos = "t!", out.width="\\textwidth", fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "TODO", cache=FALSE}
 
@@ -246,21 +255,63 @@ knitr::include_graphics("schema.png")
 
 ```
 
-the key unit in our schema is the trial, which we define as the actions associated with picking out one target image out of a pool of options. Each trial can be associated with messages -- speech acts or typed messages from describer and matchers, which are associated with the trial, who produced them, and what order they are in within the trial. Trials also have choice information -- who selected what option. 
+## Metadata
+In addition to the core information about what happened during the game, we have several tables for metadata about the players, images, and experimental features of the study. 
 
-Trials contain information such as what game they were in, who the describer and matchers were, what the image set was, and when in the game they were, and what condition they were part of. We also label trials based on whether they were "ordering" or "matching" trials. In matching trials, a given target is specifically highlighted and the matcher picks one and then moves on. In ordering, the goal is to reproduce a given order of the set (or subset) of targets. We separate these into trials, but there is flexibility in that a matcher might revise their choice to one trial after later. TODO clarify!
+### Datasets
+The datasets table contains only bibliographic information, linking our dataset_id to the full and short citations for that dataset. 
 
-Datasets 
+### conditions
+Iterated reference games can vary along a number of design features, which we code for. Most of these factors are coded in the "conditions" table. 
 
-Conditions
+We code several meta-data factors as condition information. These include
 
-Players for player demographic information where available 
+* language: the language in which the iterated reference game was conducted 
 
-Images. We store these separately because some different papers use the same images. We include image files where we have them and link to another database (kilogram) where there is overlap. 
+* group-size: the number of players in a game, where we define game as a set of players who interact with each other but no one else
+
+* partner constancy or whether or not the same set of people is active the entire game. If there are changes in who is interacting, there is not partner constancy. 
+
+* role constancy: roles are constant if each player is only the describer or a matcher when they are active; roles are not constant if a matcher becomes a describer or vice versa. 
+
+* backchannel: designs vary on how the matchers may communicate with the describer. We break this up into 3 levels: full if there are no restrictions on communication (within the modality), limited if there is some communication (example, if only one message can be sent), and none if there is no communication channel from matcher to describer. 
+
+* feedback: we use "feedback" to refer to information players receive on the correctness of their selections from the experimenters. In full feedback, after each trial, players learn if the selection(s) were correct or incorrect and what the correct target was. In limited feedback, there is some correctness feedback, but it doesn't include what the correct target was, or is provided after every repetition, perhaps as a total correct. In no feedback, players recieve no feedback during the game. 
+
+* modality: We code the communication modality into three levels: oral-in-person when the participants are talking and physically in the same room, whether or not they have visual access to each other; oral-remote when the participants are talking over some sort of connection (audio signal between phone booths, headsets in separate fmri machines, etc). We use written when the messages are typed, like via a chat box. 
+
+* confederates: we include an option for noting if one or more of the participants was not a "real" participant -- i.e. was an experimenter or a bot. While some confederate designs exist in the literature, especially around atypical neuro population, we have only one condition where it is relevant: one condition of hawkins2019 where players talked to a bot. Because the describer is a real participant, we include this in refbank (a reverse condition where a bot describers to a human was excluded). Iterated reference games involving some AI agents are a topic of recent study, and Refbank is ready to include those studies, and also mark them so then can be treated separately or excluded as appropriate for the research goals. 
+
+* prior-relationship: another possible source of design variation is whether the pair or group of participants have prior history with each other, which could shape their interactions and convention formation. In some cases, the populations were mixed, either with an explicit balance between familiar pairs or stranger pairs, or because the recruitment pool included some classmates and some strangers. 
+
+### Players
+The player table contains some basic demographic information about participants when available. It can be linked via the player ids. We track players age, gender, native language, race, and level of education. These are frequently not available in the datasets. 
+
+### Images (& image files)
+unlike the other tables that all contain dataset_id for easy filtering, images are often reused across different datasets. Each image has a unique image id for cross referencing with the trials and choices tables. We also record image_type (tangram, line drawing, fribble, etc). For tangram images that are in kilogram (CITE), we include the kilogram id, for cross-referencing. When we have access to the actual image file, we store those also in redivis, and include the path in image_path. 
+
+## Derived
+In addition to these tables, we also have a redivis workflow for creating derivative tables. These include vector embeddings and stanza parses of the messages data and also tables of summary statistics. 
+
+as additional processing pipelines are developed, we may add more derived tables. 
+
+things like word count, sbert, pos, other stuff 
+discuss that for processing measures that include comparison across trials, need our own light exclusions 
+
+In addition to the key tables that are imported, we also run a pipeline to generate some derivative measures, including .... 
+
+In producing these measures, we apply our own light exclusions, requiring that the describer did produced descriptions, and that there are at least 2 "blocks" worth of trials for that game. 
+
+Other derived measures include summary statistics, such as the number of trials/rep in different expts. 
 
 TODO diagram of trial/block/stage for different expt designs? 
 
-### Processing 
+## Processing 
+We started developing refbank with the iterated reference games that were conducted by members of the team, or where the data was already posted publicly. We then contacted authors of a number of iterated reference game papers asking if they were willing to share their data. 
+
+The raw data we recieved varied in format. In some cases, we recieved pre-cleaned tablular data. In other cases, we recieved output from experimental software. In some cases we recieved transcripts of spoken datasets, in other cases we got raw audio, which we transcribed using whisper (or whatever we actually used). 
+
+We attempted to fill in missing information, for instance, to identity trial boundaries on transcribed audio, or identify which image went with which label. Each dataset has a readme with import notes, including when we had to do processing or inference. 
 Depending on the study design and what types of data processing had already occurred, we received data in different formats. In some cases, where studies were conducted online, we received output from experiment software. In other cases, studies were done in person, and we either received audio recordings or transcriptions. 
 
 We transcribed things as needed; we aligned the transcript to the trial (which target) 
@@ -273,58 +324,13 @@ We imported trials from all games, including games that were excluded in the ini
 
 Along with the scripts used to import datasets, we have readmes including citation information, abstract, the key facts about the study design, and notes about any processing or ambiguities that occurred. 
 
-The processed data is not human subjects data because the choices and transcripts do not contain identifying information. Even basic demographics (gender, age in years, education level) are also not identifying. 
+The processed data is not human subjects data because the choices and transcripts do not contain identifying information. Even basic demographics (gender, age in years, education level) are also not identifying.
 
-
-### Metadata coding 
-Iterated reference games can vary along a number of design features, which we code for. Most of these factors are coded in the "conditions" table, although a few are derived from other tables. 
-
-We code several meta-data factors as condition information. These include
-* the number of players in a game, where we define game as a set of players who interact with each other but no one else. 
-* partner constancy or whether or not the same set of people is active the entire game. If there are changes in who is interacting, there is not partner constancy. 
-* role constancy: roles are constant if each player is only the describer or a matcher when they are active; roles are not constant if a matcher becomes a describer or vice versa. 
-* backchannel: designs vary on how the matchers may communicate with the describer. We break this up into 3 levels: full if there are no restrictions on communication (within the modality), limited if there is some communication (example, if only one message can be sent), and none if there is no communication channel from matcher to describer. 
-* feedback: we use "feedback" to refer to information players receive on the correctness of their selections from the experimenters. In full feedback, after each trial, players learn if the selection(s) were correct or incorrect and what the correct target was. In limited feedback, there is some correctness feedback, but it doesn't include what the correct target was, or is provided after every repetition, perhaps as a total correct. In no feedback, players recieve no feedback during the game. 
-* modality: We code the communication modality into three levels: oral-in-person when the participants are talking and physically in the same room, whether or not they have visual access to each other; oral-remote when the participants are talking over some sort of connection (audio signal between phone booths, headsets in separate fmri machines, etc). We use written when the messages are typed, like via a chat box. 
-* confederates: we include an option for noting if one or more of the participants was not a "real" participant -- i.e. was an experimenter or a bot. While some confederate designs exist in the literature, especially around atypical neuro population, we have only one condition where it is relevant: one condition of hawkins2019 where players talked to a bot. Because the describer is a real participant, we include this in refbank (a reverse condition where a bot describers to a human was excluded). Iterated reference games involving some AI agents are a topic of recent study, and Refbank is ready to include those studies, and also mark them so then can be treated separately or excluded as appropriate for the research goals. 
-* whatever we called familiarity: another possible source of design variation is whether the pair or group of participants have prior history with each other, which could shape their interactions and convention formation. In some cases, the populations were mixed, either with an explicit balance between familiar pairs or stranger pairs, or because the recruitment pool included some classmates and some strangers. 
-* TODO were there any other categories? 
-
-In a few cases, condition information was not fully specified in the paper. In these cases, we either talked with the authors, or made our best guesses from the paper. When there were borderline cases that were not explicit we inferred them and made a note in the readme. 
-
-### Derivative measures 
-things like word count, sbert, pos, other stuff 
-discuss that for processing measures that include comparison across trials, need our own light exclusions 
-
-In addition to the key tables that are imported, we also run a pipeline to generate some derivative measures, including .... 
-
-In producing these measures, we apply our own light exclusions, requiring that the describer did produced descriptions, and that there are at least 2 "blocks" worth of trials for that game. 
-
-Other derived measures include summary statistics, such as the number of trials/rep in different expts. 
-
-### what we don't include 
+Metadata was coded from the data and from the paper or write-up. In a few cases, condition information was not fully specified in the paper. In these cases, we either talked with the authors, or made our best guesses from the paper. When there were borderline cases that were not explicit we inferred them and made a note in the readme. 
 
 Some of the contributed dataset had additional information beyond the shared metrics. We do not include these additional data (such as pre- or post- tests, mouse or eye tracking, frmi data, etc). 
 
 ## Current datasets
-(+ how solicitation happened)
-this is where a table of included datasets & vague properties could be helpful!
-To populate refbank, we started with datasets that had been collected by the authors, and that already had publicly posted data. We then sent emails soliciting data from people who published this type of study. We accept datasets including those that are unpublished. 
-
-Datasets vary in size, but some of the smaller datasets provide richness in terms of adding to diversity in modality, language, etc. 
-
-We are in the process of growing refbank, and welcome the contribution of additional datasets -- reach out to the authors if you have an iterated reference game to contribute. 
-
-in text overall size at current version!
-
-Refbank currently has data from 13 datasets (12 English, 1 Dutch), including 1.3 million words from 127K referential trials from 2415 games and 7600 participants (Table 1). TODO update!
-
-These datasets are primarily in English, although include 1 dataset each in French, Swiss German, Dutch, and codeswitching between Spanish and English. Datasets are primarily made up of adult participants, although 3 datasets include data from children: two of just children interacting with peers (CITES), and one of child-parent pairs (CITE). 
-
-Datasets vary ... 
-
-TODO these tables need help! 
-
 ```{r}
 version <- "v12.4"
 
@@ -333,6 +339,22 @@ datasets <- get_datasets(version = version)
 
 condition_summary <- refbankr::get_dataset_summary(version = version)
 
+dataset_summary_stats <- condition_summary |> summarize(datasets=nrow(distinct(datasets)), 
+                                                        words=sum(total_num_words),
+                                                        trials=sum(total_num_trials),
+                                                        games=sum(total_num_games),
+                                                        players=sum(total_num_players))
+```
+Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets including `r dataset_summary_stats$words[1] |> scales::comma()` words from `r dataset_summary_stats$trials[1] |> scales::comma()` referential trials from `r dataset_summary_stats$games[1] |> scales::comma()` games and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table TODO).
+
+These datasets are primarily in English, although include 1 dataset each in French, Swiss German, Dutch, and codeswitching between Spanish and English. Datasets are primarily made up of adult participants, although 3 datasets include data from children: two of just children interacting with peers (CITES), and one of child-parent pairs (CITE). 
+
+Datasets vary in their size and design features. 
+
+
+
+
+```{r}
 dataset_features <- condition_summary |>
   left_join(datasets) |>
   group_by(dataset_id, short_cite) |>
@@ -425,7 +447,7 @@ data_features_all <- dataset_features |>
      booktabs = TRUE,
      escape=F,
      linesep = "",
-     caption = "Design features of each dataset. 'ltd' is used as an abbrevation of 'ltd'. Multiple values indicate that conditions varied within the data",
+     caption = "Design features of each dataset. 'ltd' is used as an abbrevation of limited. Multiple values indicate that conditions varied within the data",
      col.names = linebreak(c("Paper", "Language", "Modality", 
                              "Role\nswitch", "Partner\nswitch","feedback", "backchannel"
                              ), align
