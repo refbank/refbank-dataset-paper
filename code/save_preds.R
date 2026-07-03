@@ -18,7 +18,7 @@ do_preds <- function(mod) {
     / total)
   }
   preds_overall <- draws_overall |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", ".category")))) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size")))) |>
     summarize(
       mean = mean(.epred),
       low = quantile(.epred, .025),
