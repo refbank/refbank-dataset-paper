@@ -40,3 +40,14 @@ pos_mod_log <- brm(
   prior = logistic_pos_priors,
   data = per_describer_for_model |> filter(stage_num == 1)
 )
+
+per_describer_modality <- per_describer_for_model |> mutate(modality = ifelse(modality == "written", "written", "oral"))
+
+pos_mod_log_modality <- brm(
+  cbind(NOUN, VERB, MODIFIER, FUNCTION, DET, PRON) | trials(total) + weights(w) ~ log_rep_num * modality +
+    (log_rep_num || dataset_id / condition_id),
+  family = multinomial(refcat = "PRON"),
+  file = here("cached_model_files/mods/pos_log_mod_modality.rds"),
+  prior = logistic_pos_priors,
+  data = per_describer_modality |> filter(stage_num == 1)
+)
