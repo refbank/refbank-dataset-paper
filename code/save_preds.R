@@ -10,7 +10,7 @@ do_preds <- function(mod) {
   is_multinomial <- isTRUE(mod$family$family == "multinomial")
 
   draws_overall <- mod$data |>
-    distinct(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size", "total")))) |>
+    distinct(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size", "total", "modality")))) |>
     add_epred_draws(mod, re_formula = NA, ndraws = 1000)
 
   if (is_multinomial) {
@@ -18,14 +18,14 @@ do_preds <- function(mod) {
     / total)
   }
   preds_overall <- draws_overall |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size")))) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size", "modality")))) |>
     summarize(
       mean = mean(.epred),
       low = quantile(.epred, .025),
       high = quantile(.epred, .975)
     )
   draws_condition <- mod$data |>
-    distinct(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".category", "option_size", "total")))) |>
+    distinct(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".category", "option_size", "total", "modality")))) |>
     add_epred_draws(mod, ndraws = 1000)
 
   if (is_multinomial) {
@@ -36,7 +36,7 @@ do_preds <- function(mod) {
   }
 
   preds_condition <- draws_condition |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".category")))) |>
+    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".category", "modality")))) |>
     summarize(
       mean = mean(.epred),
       low = quantile(.epred, .025),

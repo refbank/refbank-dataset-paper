@@ -127,22 +127,51 @@ plot_preds <- function(df, dv){
 
 plot_preds_pos <- function(df, dv){
   df <- df |> filter(rep_num<=6)
-  ggplot() +
-    geom_line(
-      data = df |> filter(!is.na(dataset_id)),
-      aes(
-        x = rep_num, y = mean,ymin=low, ymax=high,
-        group = interaction(condition_id, pos)
-      ),color="grey"
-    ) +
-    geom_ribbon(
-      data = df |> filter(is.na(dataset_id)),
-      aes(x = rep_num, y = mean, ymin=low, ymax=high, fill=pos, group=pos),alpha=.3) +
-    theme(legend.position = "none")+
-   geom_line(
-      data = df |> filter(is.na(dataset_id)),
-      aes(x = rep_num, y = mean, ymin=low, ymax=high, color=pos, group=pos), linewidth=1) +
-    theme(legend.position = "none")+facet_wrap(~pos)
+
+  if ("modality" %in% names(df)) {
+    # solarized accent colors for the overall (per-modality) line and ribbon
+    main_colors <- c(oral = "#cb4b16", written = "#268bd2") # solarized orange, blue
+    # dulled shades for the faint per-condition lines
+    faint_colors <- c(oral = "black", written = "grey60")
+
+    ggplot() +
+      # geom_line(
+      #   data = df |> filter(!is.na(dataset_id), modality == "oral"),
+      #   aes(x = rep_num, y = mean, group = interaction(condition_id, pos)),
+      #   color = faint_colors[["oral"]]
+      # ) +
+      geom_line(
+        data = df |> filter(!is.na(dataset_id)),
+        aes(x = rep_num, y = mean, group = interaction(condition_id, pos)),
+        color = "grey"
+      ) +
+      geom_ribbon(
+        data = df |> filter(is.na(dataset_id)),
+        aes(x = rep_num, ymin=low, ymax=high, fill=modality, group=modality),alpha=.3) +
+      geom_line(
+        data = df |> filter(is.na(dataset_id)),
+        aes(x = rep_num, y = mean, color=modality, group=modality), linewidth=1) +
+      scale_color_manual(values = main_colors) +
+      scale_fill_manual(values = main_colors) +
+      facet_wrap(~pos)
+  } else {
+    ggplot() +
+      geom_line(
+        data = df |> filter(!is.na(dataset_id)),
+        aes(
+          x = rep_num, y = mean,ymin=low, ymax=high,
+          group = interaction(condition_id, pos)
+        ),color="grey"
+      ) +
+      geom_ribbon(
+        data = df |> filter(is.na(dataset_id)),
+        aes(x = rep_num, y = mean, ymin=low, ymax=high, fill=pos, group=pos),alpha=.2) +
+      theme(legend.position = "none")+
+     geom_line(
+        data = df |> filter(is.na(dataset_id)),
+        aes(x = rep_num, y = mean, ymin=low, ymax=high, color=pos, group=pos), linewidth=1) +
+      theme(legend.position = "none")+facet_wrap(~pos)
+  }
 }
 
 ```
@@ -161,6 +190,7 @@ Iterated reference games are used with children and teenagers [@leung2024; @bran
 
 As reviewed above, different researchers have used IRGs with different setups and settings as a measure of communication. The breadth of studies in this domain presents an opportunity for evidence synthesis to understand various phenomena related to convention formation across different samples and experimental designs. In particular, there are a number of dimensions of variation in experimental design across IRGs, including different stimuli choices, different numbers of options, and different sizes and structures of groups. Running a new experiment across all these options would be expensive, so aggregating existing data provides a way to increase what we can learn from the data we already have, and allow for more pinpointed studies in the future. 
 
+[@koile2021]
 One common approach for evidence synthesis is meta-analysis; however, the iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Additionally, language data of the kind generated in iterated reference games are very rich and amenable to many different possible analyses, which may not be captured by simple statistical aggregation.
 
 Systematic reviews are another option, but they don't offer quantitative evidence synthesis [@bovet2023]. [possibly somewhere need to say more about that and how this is different?]
@@ -196,6 +226,7 @@ To enable to reuse of iterated reference game datasets, we present Refbank, an o
 
 # Design and technical approach
 
+[somewhere we should mention FAIR]
 Refbank is structured as a relational database with different tables encoding different types of data. Because iterated reference games can vary from each other in different ways, we needed a schema that could accommodate different set-ups while still unifying the information for each cross dataset comparison. 
 
 A first question is how to define an iterated reference game. For Refbank purposes, we consider reference games where at least some of the stimuli are repeated (in at least some conditions), and change across repetition is of interest. The describer must be a human participant (not an AI agent, not a confederate). Natural language must be used to communicate. 
@@ -614,16 +645,32 @@ log_log_pred <- read_rds(here(mod_loc, "summary", "log_log_pred.rds"))
 
 ```{r, eval=F}
 
+pos_log_mod <- read_rds(here("cached_model_files/mods/pos_log_mod.rds"))
+pos_log_mod_modality <- read_rds(here("cached_model_files/mods/pos_log_mod_modality.rds"))
+
 tibble(log_rep_num = c(log(1), log(6)),
     total = 1,
     rep = factor(c("first", "last"), levels = c("first", "last"))
   ) |> 
-    add_epred_draws(pos_mod_log, re_formula = NA) |> ungroup() |>
+    add_epred_draws(pos_log_mod, re_formula = NA) |> ungroup() |>
     select(.draw, .category, rep, .epred) |>
     pivot_wider(names_from = rep, values_from = .epred) |> 
     mutate(diff = last - first) |>
     group_by(.category) |>
     median_qi(diff) |> write_rds(here(mod_loc, "summary", "pos_prob_scale.rds" ))
+
+tibble(log_rep_num = c(log(1), log(6)),
+    total = 1,
+    rep = factor(c("first", "last"), levels = c("first", "last"))
+  ) |> 
+  expand_grid(modality=c("oral", "written")) |> 
+    add_epred_draws(pos_log_mod_modality, re_formula = NA) |> ungroup() |>
+    select(.draw, .category, rep, .epred, modality) |>
+    pivot_wider(names_from = rep, values_from = .epred) |> 
+    mutate(diff = last - first) |>
+    group_by(.category, modality) |>
+    median_qi(diff) |> write_rds(here(mod_loc, "summary", "pos_prob_scale_modality.rds" ))
+
 
 
 ```
@@ -631,19 +678,22 @@ tibble(log_rep_num = c(log(1), log(6)),
 ```{r}
 pos_stats <- read_rds(here(mod_loc, "summary", "pos_prob_scale.rds")) |> rename(Estimate=diff, lower=.lower, upper=.upper, Term=.category)
 
-pos_form <- read_rds(here(mod_loc, "formulae", "pos_log_mod.rds"))
+pos_form <- read_rds(here(mod_loc, "formulae", "pos_log_mod_modality.rds"))
+
+pos_stats_modality <- read_rds(here(mod_loc, "summary", "pos_prob_scale_modality.rds")) |> rename(Estimate=diff, lower=.lower, upper=.upper, Term=.category)
+
 ```
 
-The distributions of words and phrases used in descriptions changes as conventionalization occurs. For instance, definite or bare noun phrases may increase compared to indefinites, and more holistic or metaphorical descriptions may become more common relative to literal, shape-based, or part-based descriptions [CITATIONS]. As as illustration of how Refbank and NLP pipelines can be used to scale up reference game analyses, we focus on the change in the distribution of parts of speech. CITE HAWKINS 2020 found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. We are able to scale up this analysis to all the monolingual datasets in Refbank. We use Stanza to parse ... these parses, including full dependency parses are avaialble as derived tables in refbank. TODO 
+The distributions of words and phrases used in descriptions changes as conventionalization occurs. For instance, definite or bare noun phrases may increase compared to indefinites [@isaacs1987; @brown-schmidt2016; @dahan2025], and more holistic or metaphorical descriptions may become more common relative to literal, shape-based, or part-based descriptions [@clark1986; @boyce2024]. As as illustration of how Refbank and NLP pipelines can be used to scale up reference game analyses, we focus on the change in the distribution of parts of speech. @hawkins2020dynamics found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. We are able to scale up this analysis to all the monolingual datasets in Refbank. We use Stanza to parse each message [@qi2020]. The part of speech distributions and full dependency parses are saved in derived tables in Refbank. 
 
-For this analysis, we lump parts of speech into 6 coarse grained categories: nouns, verbs, modifiers (adjectives and adverbs), pronouns, determiners, and function words (adpositions, conjunctions, etc). We ran a mixed effects multinomial model with pronoun as the reference class, weighting each trial equally: `r form(pos_form)`. 
-According to the model predictions, from the first to sixth repetition, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decrease in frequency (`r stats_text(pos_stats,6)`). Other categories were less consistent. ( relatively constant in proportion. actually verbs and dets decrease slightly, but range includes 0, modifier is pretty constant. ) The model predicted results are shown in Figure \ref{fig:pos}. 
-
-
-```{r pos, fig.width=6, fig.height=3, fig.cap="Distribution in parts of speech over repetitions. Colored lines and ribbons are the predictions and 95%CrI from the model; faint lines are per-condition model predictions."}
+For this analysis, we lump parts of speech into 6 coarse grained categories: nouns, verbs, modifiers (adjectives and adverbs), pronouns, determiners, and function words (adpositions, conjunctions, etc).   We ran a mixed effects multinomial model with pronoun as the reference class, weighting each trial equally: `r form(pos_form) |> str_to_lower()`. After initial visualization suggested that spoken and written corpora might vary, we added modality (oral or written) as a predictor in an exploratory model.
+According to the model predictions, from the first to sixth repetition, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decrease in frequency (`r stats_text(pos_stats,6)`). Other categories were less consistent. Modality makes the largest difference in the size of the noun boost (`r stats_text(pos_stats_modality,1)` for spoken versus `r stats_text(pos_stats_modality,2)` for written) and the direction of change for determiners, where determiner rate is neutral to increasing in spoken corpora (`r stats_text(pos_stats_modality, 9)`) and decreasing in written corpora (`r stats_text(pos_stats_modality, 10)`).  The model predicted results from the modal with modality are shown in Figure \ref{fig:pos-modality}. 
 
 
-read_rds(here(mod_loc, "predicted", "pos_log_mod.rds")) |>rename(pos=.category) |> 
+```{r pos-modality, fig.width=6, fig.height=3, fig.cap="Distribution in parts of speech over repetitions. Colored lines and ribbons are the predictions and 95%CrI from the model; faint lines are per-condition model predictions."}
+
+
+read_rds(here(mod_loc, "predicted", "pos_log_mod_modality.rds")) |>rename(pos=.category) |> 
   mutate(pos=case_when(
     pos=="NOUN" ~ "noun",
     pos=="VERB" ~ "verb",
@@ -651,11 +701,10 @@ read_rds(here(mod_loc, "predicted", "pos_log_mod.rds")) |>rename(pos=.category) 
     pos=="DET" ~ "determiner", 
     pos=="PRON" ~ "pronoun",
     pos=="FUNCTION"~ "other function word")) |> 
-      plot_preds_pos("Reduction log lin")+labs(x="Repetition Number")
+      plot_preds_pos("Reduction log lin")+labs(x="Repetition number", y="Fraction")
 
 
 ```
-
 
 ## Semantic embedding similiarities
 
@@ -669,13 +718,15 @@ diverge_form <- read_rds(here(mod_loc, "formulae", "diverge_mod.rds"))
 
 ```
 
-One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in a semantic vector space and then quantify similarities of pairs of descriptions using cosine similarity or another distance metric (cite other uses of this). As part of the refbank processing pipeline, we embed all descriptions using TODO then calculate cosine similarities between relevant pairs of descriptions to measure how the semantic distances of descriptions change across repetition number. This embedding framework is multilingual, and we use it on all datasets. 
+One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in a semantic vector space and then quantify similarities of pairs of descriptions using cosine similarity or another distance metric. This approach is used in analyses of dialogue trajectories [@reece2023; @fischer2024; CITES. 
 
-TODO cite previous work (aka us, but maybe also others) about using semantic vectors for similarity. 
-Within a game, the similarity between descriptions to the same target in adjacent repetitions is an index of convention formation. When there is low similarity, descriptions are changing, but when there is high similarity the target to description mapping has stabilized. To test for stabilization of descriptions, we ran a mixed effects ordered beta regression model `r form(to_next_form)` (cite this type of model ex: https://osf.io/preprints/socarxiv/2sx6y_v1). In this model, the similarity between a description and the corresponding description in the next repetition increases over repetitions by `r stats_text(to_next_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}A.
+As part of the refbank processing pipeline, we embed all descriptions using a multilingual text-embedder, specifically jina-embeddings-v5-text-small [@akram2026;@feng2022]. We then calculate cosine similarities between relevant pairs of descriptions to measure how the semantic distances of descriptions change across repetition number. 
 
-TODO cite previous work (aka us, but maybe also others) about using semantic vectors for dissimilarity. 
-As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another. Vector semantics is also used to test for this divergence (CITATIONS). To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same repetition and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B.
+
+Within a game, the similarity between descriptions to the same target in adjacent repetitions is an index of convention formation [@hawkins2020dynamics; @boyce2024]. When there is low similarity, descriptions are changing, but when there is high similarity the target to description mapping has stabilized. To test for stabilization of descriptions, we ran a mixed effects ordered beta regression model `r form(to_next_form)` [@kubinec2022]. In this model, the similarity between a description and the corresponding description in the next repetition increases over repetitions by `r stats_text(to_next_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}A.
+
+
+As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another [@hawkins2020dynamics; @boyce2024]. To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same repetition and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B.
 
 
 ```{r vectorsem, fig.width=6, fig.height=3, fig.cap="Cosine similarities between a description and the next repetition description from the same game (A) or descriptions from the same repetition and different games (B). Blue line shows the overall model prediction and 95% CrI, faint lines show per-condition predictions. "}
@@ -698,6 +749,11 @@ commentary on that this data can be shared once it's transcribed b/c its not hum
 Useful for exploration and for future directions for new data collection (ex. multi-lingual, or cleanly comparable modality or whatever we want to point towards)
 
 Refbank can be used to study the moderators and generalizations of convention formation phenomena in IRGs, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
+
+can apply different techniques such as newer conversational analysis tools [@jung2025]; can test generalizing of questions such as definiteness. 
+
+something about AI 
+
 <!--# Acknowledgements
 
 Place acknowledgments (including funding information) in a section at
