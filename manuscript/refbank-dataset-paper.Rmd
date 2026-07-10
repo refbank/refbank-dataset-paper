@@ -227,7 +227,7 @@ dataset_summary_stats <- condition_summary |> summarize(
 )
 ```
 
-To enable to reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets, including `r dataset_summary_stats$words[1] |> scales::comma()` words from `r dataset_summary_stats$trials[1] |> scales::comma()` referential trials from `r dataset_summary_stats$games[1] |> scales::comma()` games and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table TODO). In the following sections, we explain the schema of Refbank and what information it contains, describe how researchers can access the data, and show a few analyses on Refbank data to demonstrate its utility. 
+To enable to reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table TODO). In the following sections, we explain the schema of Refbank and what information it contains, describe how researchers can access the data, and show a few analyses on Refbank data to demonstrate its utility. 
 
 # Design and technical approach
 
@@ -490,7 +490,7 @@ data_quantity_total |>
 
 Refbank data is stored on Redivis, a platform for hosting scientific data. A Redivis account can be made freely and is used to access the data. Data is versioned, so that either the current version or a previous version of data can be used (for reproducibility). 
 
-There are several ways of interacting with the Refbank data. We recommend using the Shiny application for quick visualizations and exploration of moderators or different datasets, via the Refbank website (refbank.stanford.edu). For analyzing data, the data tables can be downloaded via the Redivis API for Python, or using `refbankr`, a custom R package. `refbankr` functions can be used to pull any set of datasets, any version, and also to pull a sample of the data for checks. 
+There are several ways of interacting with the Refbank data. We recommend using the observable application for quick visualizations and exploration of moderators or different datasets, via the Refbank website (refbank.stanford.edu). For analyzing data, the data tables can be downloaded via the Redivis API for Python, or using `refbankr`, a custom R package. `refbankr` functions can be used to pull any set of datasets, any version, and also to pull a sample of the data for checks. 
 
 Redivis has built-in methods of filtering, exploring, and downloading data, via its viewers and workflow creation, where a chain of SQL transforms, and R and Python notebooks can be used to process data. Redivis allows for the creation of workflows that pull from datasets, and for SQL-type queries over datasets. 
 
@@ -594,6 +594,45 @@ log_log_shap_plot
 
 Figure \ref{fig:red-mod} shows the mean absolute SHAP values for experiment design features on the slope of reduction. The SHAP values are an indicator of the importance of each predictor, such that higher values reflect a greater influence of that variable on the predicted value. The most influential feature by far was backchanneling, such that full backchanneling resulted in faster reduction; this result reflects the importance of bidirectional communication on converging to a common ground. Population and image type were also important predictive features, and all other features had close to no effect on the predictions. 
 
+## Semantic embedding similiarities
+
+```{r}
+to_next_stats <- read_rds(here(mod_loc, "summary", "to_next_mod.rds"))
+diverge_stats <- read_rds(here(mod_loc, "summary", "diverge_mod.rds"))
+
+to_next_form <- read_rds(here(mod_loc, "formulae", "to_next_mod.rds"))
+diverge_form <- read_rds(here(mod_loc, "formulae", "diverge_mod.rds"))
+
+```
+
+One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in a semantic vector space and then quantify similarities of pairs of descriptions using cosine similarity or another distance metric. This approach is used in analyses of dialogue trajectories [@reece2023; @fischer2024; CITES]. 
+
+As part of the Refbank processing pipeline, we embed all descriptions using a multilingual text embedding model, specifically jina-embeddings-v5-text-small [@akram2026; @feng2022]. We then calculate cosine similarities between relevant pairs of descriptions to measure how the semantic distances of descriptions change across repetition number. 
+
+Within a game, the similarity between descriptions to the same target in adjacent repetitions is an index of convention formation [@hawkins2020dynamics; @boyce2024]. When there is low similarity, descriptions are changing, but when there is high similarity the target to description mapping has stabilized. To test for stabilization of descriptions, we ran a mixed effects ordered beta regression model `r form(to_next_form)` [@kubinec2023]. In this model, the similarity between a description and the corresponding description in the next repetition increases over repetitions by `r stats_text(to_next_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}A.
+
+As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another [@hawkins2020dynamics; @boyce2024]. To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same repetition and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B.
+
+```{r vectorsem, fig.width=6, fig.height=3, fig.cap="Cosine similarities between a description and the next repetition description from the same game (A) or descriptions from the same repetition and different games (B). Blue line shows the overall model prediction and 95% CrI, faint lines show per-condition predictions. "}
+
+to_next_plot <- read_rds(here(mod_loc, "predicted", "to_next_mod.rds")) |>
+  filter(rep_num < 6) |>
+  plot_preds("Reduction log lin") + 
+  labs(x = "Repetition Number", y = "Cosine similarity") + 
+  coord_cartesian(ylim = c(.5, 1), xlim = c(1, 5)) + 
+  labs(title = "Within groups")
+
+
+diverge_plot <- read_rds(here(mod_loc, "predicted", "diverge_mod.rds")) |> 
+  plot_preds("Reduction log lin") + 
+  labs(x = "Repetition Number", y = "Cosine similarity") + 
+  coord_cartesian(ylim = c(.5, 1)) + 
+  labs(title = "Across groups")
+
+plot_grid(to_next_plot, diverge_plot, labels = "AUTO")
+```
+
+
 ## Distribution of parts of speech
 
 ```{r, eval=F}
@@ -662,55 +701,18 @@ read_rds(here(mod_loc, "predicted", "pos_log_mod_modality.rds")) |>
   plot_preds_pos("Reduction log lin") + labs(x = "Repetition number", y = "Fraction")
 ```
 
-## Semantic embedding similiarities
-
-```{r}
-to_next_stats <- read_rds(here(mod_loc, "summary", "to_next_mod.rds"))
-diverge_stats <- read_rds(here(mod_loc, "summary", "diverge_mod.rds"))
-
-to_next_form <- read_rds(here(mod_loc, "formulae", "to_next_mod.rds"))
-diverge_form <- read_rds(here(mod_loc, "formulae", "diverge_mod.rds"))
-
-```
-
-One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in a semantic vector space and then quantify similarities of pairs of descriptions using cosine similarity or another distance metric. This approach is used in analyses of dialogue trajectories [@reece2023; @fischer2024; CITES]. 
-
-As part of the Refbank processing pipeline, we embed all descriptions using a multilingual text embedding model, specifically jina-embeddings-v5-text-small [@akram2026; @feng2022]. We then calculate cosine similarities between relevant pairs of descriptions to measure how the semantic distances of descriptions change across repetition number. 
-
-Within a game, the similarity between descriptions to the same target in adjacent repetitions is an index of convention formation [@hawkins2020dynamics; @boyce2024]. When there is low similarity, descriptions are changing, but when there is high similarity the target to description mapping has stabilized. To test for stabilization of descriptions, we ran a mixed effects ordered beta regression model `r form(to_next_form)` [@kubinec2023]. In this model, the similarity between a description and the corresponding description in the next repetition increases over repetitions by `r stats_text(to_next_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}A.
-
-As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another [@hawkins2020dynamics; @boyce2024]. To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same repetition and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log repetition. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B.
-
-```{r vectorsem, fig.width=6, fig.height=3, fig.cap="Cosine similarities between a description and the next repetition description from the same game (A) or descriptions from the same repetition and different games (B). Blue line shows the overall model prediction and 95% CrI, faint lines show per-condition predictions. "}
-
-to_next_plot <- read_rds(here(mod_loc, "predicted", "to_next_mod.rds")) |>
-  filter(rep_num < 6) |>
-  plot_preds("Reduction log lin") + 
-  labs(x = "Repetition Number", y = "Cosine similarity") + 
-  coord_cartesian(ylim = c(.5, 1), xlim = c(1, 5)) + 
-  labs(title = "Within groups")
-
-
-diverge_plot <- read_rds(here(mod_loc, "predicted", "diverge_mod.rds")) |> 
-  plot_preds("Reduction log lin") + 
-  labs(x = "Repetition Number", y = "Cosine similarity") + 
-  coord_cartesian(ylim = c(.5, 1)) + 
-  labs(title = "Across groups")
-
-plot_grid(to_next_plot, diverge_plot, labels = "AUTO")
-```
-
 # Discussion
 
 Iterated reference games are a classic paradigm that has been used to study numerous aspects of dialogue and communication, and continues to be used in new ways, including as a way of assessing vision--language models. While iterated reference games share some core properties, games can also vary along a number of design parameters. In addition, iterated reference games are analysed in a number of different ways, with more datasets being studied on a subset of possible questions. Even for research questions that are commonly reported on, such as change in number of words over repetition, differences in design and modeling approach and reporting make it difficult to quantitatively synthesis results. Taken together, these factors mean that iterated reference games are a good candidate for a harmonized repository: data can be unified, data have high reuse value, and alternative synthesis methods such as meta-analysis are not as suitable. 
 
-In this paper, we introduced Refbank, an open repository of iterated reference game data. As of writing, Refbank houses  `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets including `r dataset_summary_stats$words[1] |> scales::comma()` words from `r dataset_summary_stats$players[1] |> scales::comma()` participants. Refbank data follows FAIR standards and is easy to access via multiple different API options, making it readable by machines. 
+In this paper, we introduced Refbank, an open repository of iterated reference game data. Refbank data follows FAIR standards and is easy to access via multiple different API options, making it readable by machines. 
 
-Analyses of Refbank confirmed the commonly observed patterns of increasing accuracy and decreasing utterance length. With a larger dataset that before, we also looked at the functional form of the relationship between utterance length of repetition number: in alignment with @bogels2026, the best fitting functional form (of the options we tried) was log-log. 
+Most of the analyses we presented were only made possible by Refbank and would not be as feasible on an individual dataset. The functional relationship between utterance length and repetition is more robustly fit over a range of datasets, and we provide additional evidence that the relationship is roughly log-log or log-linear, confirming @bogels2026. Moreover, using the coded metadata, we were able to examine which design features have the largest impact on the slope of reduction. Knowing whether certain design features matter is important to experiment design, but requires large amounts and diversity of data to study. 
+
+Semantic trajectories have been analysed in iterated reference games before, but by scaling up a unified pipeline, we are able to analyse multiple datasets, including in different languages, in the same pipeline. We confirm that the trends of within game semantic convergence and between game semantic divergence, that had previously been observed in a few written-modality tangram studies extend to spoken studies, studies using other stimuli, and studies in different languages. 
 
 The possibility for cross-dataset comparisons also allows Refbank to enable novel findings: in an analysis of distributions of part of speech across repetition, we found some divergences between spoken and typed paradigms, where noun proportion increased more sharply in typed datasets, and determiners increased in spoken datasets, but not written ones. This may reflect differences in the cost to produce different parts of speech in different modalities. A more telegraphic approach may be easier in typing where cost is per character, but in speaking, determiners and other short function words may be faster to say than to omit. This idea of differential cost based on modality suggests a direction for future work that more closely manipulates modality and cost in controlled, comparable experiments. 
 
-Semantic trajectories have been analysed in iterated reference games before, but by scaling up a unified pipeline, we are able to analyse multiple datasets, including in different languages, in the same pipeline. We confirm the overall trend of within game semantic convergence and between game semantic divergence. 
 
 These analyses are a gesture towards what Refbank makes possible. By unifying datasets in a common framework, we make possible generalization of existing analyses to a larger collection of datasets, the use of new processing pipelines on the data as techniques arise, and the study of variation across datasets and design choices. The dataset is set-up for compatibility with natural language processing tools as pipelines can be created. 
 
@@ -724,8 +726,7 @@ The data are heterogenous, but metadata is coded, so researchers can filter to t
 
 ## Conclusion 
 
-We encourage the sharing of iterated reference game data and hope that Refbank will house more games in the future. Transcripts, selections, and metadata are not human subjects data under ... [TODO someone where this], and so likely can be shared. 
-(could crib from the peekbank behavioral methods paper for how they framed this!)
+We encourage the sharing of iterated reference game data and hope that Refbank will house more games in the future. Transcripts, selections, and metadata are not human subjects data under ... [TODO someone write this], and so likely can be shared. (could crib from the peekbank behavioral methods paper for how they framed this!)
 
 Refbank can be used to study the moderators and generalizations of convention formation phenomena in iterated reference games, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
 
