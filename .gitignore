@@ -59,3 +59,6 @@ rsconnect/
 *.svg
 
 cached_model_files/mods/*.rds
+
+*.DS_Store
+
