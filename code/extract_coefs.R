@@ -4,6 +4,8 @@ library(tidyverse)
 library(cmdstanr)
 library(xgboost)
 library(shapviz)
+library(ggrepel)
+library(ggbeeswarm)
 options(
   brms.backend = "cmdstanr",
   mc.cores = 4, # parallel::detectCores(),
@@ -110,6 +112,52 @@ log_log_shap_plot <- sv_importance(log_log_shap) +
   scale_y_discrete(labels = plot_lab)
 log_log_bee_plot <- sv_importance(log_log_shap, kind = "bee") +
   scale_y_discrete(labels = plot_lab)
+
+log_log_pred_vals <- log_log_preds |>
+  mutate(across(all_of(moderators), as.character),
+         Var1 = c(LETTERS, paste0(LETTERS, "1"), paste0(LETTERS, "2")[1:6]),
+         backchannel = replace_values(backchannel, c("none", "limited") ~ "none/limited"),
+         population = replace_values(population, c("child", "child-parent") ~ "child/child-parent"),
+         image_type = replace_values(image_type, c("fribble", "photograph") ~ "other"),
+         n_players = ifelse(n_players == "2", "2", ">2"),
+         option_size = case_when(as.numeric(option_size) < 12 ~ "<12",
+                                 option_size == "12" ~ "12",
+                                 as.numeric(option_size) > 12 ~ ">12"),
+         modality = ifelse(modality == "written", "written", "oral")) |>
+  pivot_longer(cols = all_of(moderators),
+               names_to = "feature",
+               values_to = "feature_value")
+log_log_bee_data <- log_log_bee_plot@data
+log_log_bee_labels <- log_log_bee_data |>
+  left_join(log_log_pred_vals, by = join_by(Var1, feature)) |>
+  group_by(feature, feature_value) |>
+  slice_min(order_by = abs(value - median(value)),
+            n = 1, with_ties = FALSE) |>
+  select(Var1, feature, label = feature_value)
+
+log_log_bee_data_l <- log_log_bee_data |>
+  left_join(log_log_pred_vals, by = join_by(Var1, feature)) |>
+  left_join(log_log_bee_labels, by = join_by(Var1, feature)) |>
+  mutate(colour_cat = case_when(
+    feature_value %in% c("full", "adult", "tangram", "2", "yes", ">12", "oral") ~ "C",
+    feature_value %in% c("limited", "line drawing", "12") ~ "B",
+    .default = "A"
+  ),
+  feature = factor(feature, levels = levels(log_log_bee_data$feature)))
+
+log_log_bee_new <- ggplot(log_log_bee_data_l,
+       aes(x = value, y = feature, col = colour_cat)) +
+  geom_vline(xintercept = 0, lty = "dashed") +
+  geom_beeswarm(alpha = .8, corral = "wrap", corral.width = .7) +
+  geom_label_repel(aes(label = label, col = colour_cat),
+                   size = 2.5, force_pull = .8,
+                   alpha = .6, label.padding = .2, min.segment.length = 1,
+                   seed = 42) +
+  scale_colour_manual(values = c("#919191", "#439fd1", "#434ad1")) +
+  scale_y_discrete(labels = plot_lab) +
+  labs(x = "SHAP value", y = "") +
+  theme_bw() +
+  theme(legend.position = "none")
 
 # log_lin
 log_lin_xgb <- hyper_grid |>
