@@ -31,18 +31,18 @@ log_lin_mod <- read_rds(here(mod_loc, "red_mod_log_lin.rds"))
 log_log_preds <- coef(log_log_mod)$`dataset_id:condition_id` |>
   as_tibble(rownames = "dataset_cond") |>
   select(dataset_cond,
-    slope = Estimate.log_rep_num,
-    se = Est.Error.log_rep_num
+    slope = Estimate.log_round_num,
+    se = Est.Error.log_round_num
   ) |>
   left_join(condition_info)
 
 log_lin_preds <- coef(log_lin_mod)$`dataset_id:condition_id` |>
   as_tibble(rownames = "dataset_cond") |>
-  select(dataset_cond, slope = Estimate.rep_num, se = Est.Error.rep_num) |>
+  select(dataset_cond, slope = Estimate.round_num, se = Est.Error.round_num) |>
   left_join(condition_info)
 
 moderators <- c(
-  "n_players", "option_size", "image_type",
+  "n_players", "option_set_size", "image_type",
   "partner_constancy", "role_constancy", "population",
   "modality", "feedback", "backchannel"
 )

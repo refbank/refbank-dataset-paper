@@ -10,7 +10,7 @@ do_preds <- function(mod) {
   is_multinomial <- isTRUE(mod$family$family == "multinomial")
 
   draws_overall <- mod$data |>
-    distinct(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size", "total", "modality")))) |>
+    distinct(across(any_of(c("round_num", "log_round_num", ".category", "option_set_size", "total", "modality")))) |>
     add_epred_draws(mod, re_formula = NA, ndraws = 1000)
 
   if (is_multinomial) {
@@ -18,14 +18,14 @@ do_preds <- function(mod) {
     / total)
   }
   preds_overall <- draws_overall |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", ".category", "option_size", "modality")))) |>
+    group_by(across(any_of(c("round_num", "log_round_num", ".category", "option_set_size", "modality")))) |>
     summarize(
       mean = mean(.epred),
       low = quantile(.epred, .025),
       high = quantile(.epred, .975)
     )
   draws_condition <- mod$data |>
-    distinct(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".category", "option_size", "total", "modality")))) |>
+    distinct(across(any_of(c("round_num", "log_round_num", "condition_id", "dataset_id", ".category", "option_set_size", "total", "modality")))) |>
     add_epred_draws(mod, ndraws = 1000)
 
   if (is_multinomial) {
@@ -36,7 +36,7 @@ do_preds <- function(mod) {
   }
 
   preds_condition <- draws_condition |>
-    group_by(across(any_of(c("rep_num", "log_rep_num", "condition_id", "dataset_id", ".category", "modality")))) |>
+    group_by(across(any_of(c("round_num", "log_round_num", "condition_id", "dataset_id", ".category", "modality")))) |>
     summarize(
       mean = mean(.epred),
       low = quantile(.epred, .025),
@@ -45,8 +45,8 @@ do_preds <- function(mod) {
 
   preds <- preds_condition |> bind_rows(preds_overall)
 
-  if ("log_rep_num" %in% names(preds) && !"rep_num" %in% names(preds)) {
-    preds <- preds |> mutate(rep_num = exp(log_rep_num))
+  if ("log_round_num" %in% names(preds) && !"round_num" %in% names(preds)) {
+    preds <- preds |> mutate(round_num = exp(log_round_num))
   }
   return(preds)
 }

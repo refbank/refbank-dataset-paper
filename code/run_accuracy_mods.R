@@ -13,7 +13,7 @@ options(
   mc.cores = 4,
   brms.chains = 4,
   brms.iter = 2000,
-  brms.threads = threading(4)
+  brms.threads = threading(6)
 )
 
 p_beta_acc <- prior_string("normal(0, .5)", class = "b")
@@ -24,7 +24,7 @@ acc_priors <- c(p_intercept_acc, p_beta_acc, p_sd_acc)
 
 acc_for_model <- read_rds(here("cached_model_files/data_for_mods/per_matcher_for_model.rds"))
 
-acc_mod <- brm(correct ~ log_rep_num * option_size + (log_rep_num || dataset_id / condition_id),
+acc_mod <- brm(correct ~ log_round_num * option_set_size + (log_round_num || dataset_id / condition_id),
   family = bernoulli(),
   prior = acc_priors,
   file = here("cached_model_files/mods/acc_mod_log_rep.rds"),
