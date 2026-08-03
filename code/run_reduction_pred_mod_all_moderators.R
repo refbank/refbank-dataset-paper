@@ -71,9 +71,9 @@ per_describer_for_model |>
 
 red_mod_log_log_all_moderators <- brm(
   log_words ~ log_round_num +
-    log_round_num:(log_n_players + log_option_set_size + image_type +
+    log_round_num:(log_n_players + log_option_set_size +
       role_constancy + population_bin +
-      feedback_bin + backchannel_bin * modality_bin) +
+      feedback_bin + backchannel_bin + modality_bin) +
     (log_round_num || dataset_id / condition_id),
   file = here("cached_model_files/mods/red_mod_log_log_all_moderators.rds"),
   file_refit = "on_change",

@@ -596,12 +596,30 @@ Using the best fitting log-log model, we confirm the common finding that there i
 
 One analysis enabled by the aggregation of data across studies is the examination of the possible effects of experiment design features on the rate of reduction -- that is, whether some conditions result in faster reduction than others. For this analysis, we used the log(words)~log(rep) model and extracted the random slopes for log-rep-num for each condition. We then predicted the slope value as a function of experiment design features: number of players, option set size, image type, partner constancy, role constancy, population (adults vs children), modality, availability of feedback, and availability of matcher backchanneling. Because of the large number of possible moderators, we used XGBoost, a gradient-boosted tree approach to prediction. This method involves fitting a large number of decision trees based on the values of the predictors to predict the by-condition slopes, thereby allowing arbitrary non-linearities and interactions among the predictors.
 
-```{r red-mod, fig.width=4, fig.height=3, fig.cap="Mean absolute SHAP values for experiment design features on the slope of reduction. Higher values indicate greater influence on slope predictions."}
-plot_lab <- \(x) {x |> str_replace_all("_", " ") |> str_to_sentence()}
-log_log_shap <- readRDS(here(mod_loc, "log_log_shap.rds"))
-log_log_shap_plot <- shapviz::sv_importance(log_log_shap) +
-  scale_y_discrete(labels = plot_lab)
-log_log_shap_plot
+```{r red-mod, fig.width=6, fig.height=3, fig.cap="Mean absolute SHAP values for experiment design features on the slope of reduction. Higher values indicate greater influence on slope predictions."}
+# plot_lab <- \(x) {x |> str_replace_all("_", " ") |> str_to_sentence()}
+# log_log_shap <- readRDS(here(mod_loc, "log_log_shap.rds"))
+# log_log_shap_plot <- shapviz::sv_importance(log_log_shap) +
+#   scale_y_discrete(labels = plot_lab)
+# log_log_shap_plot
+
+read_rds(here(mod_loc, "summary", "red_mod_log_log_all_moderators.rds")) |> 
+  filter(str_detect(Term, "log_round_num:")) |> 
+  mutate(predictor=str_replace(Term, "log_round_num:", "")) |> 
+  mutate(predictor=case_when(
+    predictor=="role_constancyyes" ~ "constant role",
+    predictor=="population_binchild" ~ "child participants",
+    predictor=="modality_binoral" ~ "oral modality",
+    predictor=="log_option_set_size" ~ "log option set size",
+    predictor=="log_n_players" ~ "log n players",
+    predictor=="image_typephotograph" ~ "photograph images",
+    predictor=="image_typelinedrawing" ~ "line drawing images",
+    predictor=="image_typefribble" ~ "fribble images",
+    predictor=="feedback_binrestricted" ~ "no or limited feedback",
+    predictor=="backchannel_binrestricted" ~ "no or limited backchannel",
+    predictor=="backchannel_binrestricted:modality_binoral" ~ "backchannel x oral"
+  )) |> arrange(Estimate) |> 
+  ggplot(aes(x=reorder(predictor, Estimate, mean), y=Estimate, ymin=lower, ymax=upper))+geom_pointrange()+geom_hline(yintercept=0)+coord_flip()+labs(x="predictors", y="change in slope (negative=faster)")
 ```
 
 Figure \ref{fig:red-mod} shows the mean absolute SHAP values for experiment design features on the slope of reduction. The SHAP values are an indicator of the importance of each predictor, such that higher values reflect a greater influence of that variable on the predicted value. The most influential feature by far was backchanneling, such that full backchanneling resulted in faster reduction; this result reflects the importance of bidirectional communication on converging to a common ground. Population and image type were also important predictive features, and all other features had close to no effect on the predictions. 
