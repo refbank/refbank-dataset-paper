@@ -6,7 +6,7 @@ library(readr)
 library(here)
 # favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing")
 
-version <- "v13.0"
+version <- "v13.1"
 
 ### get data from redivis
 conditions <- get_conditions(version = version)
@@ -136,9 +136,9 @@ per_describer_for_model <- valid_trials_games |>
 
 
 valid_trials_games_for_sbert <- valid_trials_games |>
- group_by(game_id, round_num, room_num, dataset_id, target_image) |>
- arrange(trial_num) |>
-  lice(1) #ther e exist cases where the same target occurs more than once per round, we dedupe here
+  group_by(game_id, round_num, room_num, dataset_id, target_image) |>
+  arrange(trial_num) |>
+  slice(1) # there exist cases where the same target occurs more than once per round, we dedupe here
 
 to_next <- sbert |>
   filter(sim_type == "to_next") |>
@@ -148,7 +148,7 @@ to_next <- sbert |>
   inner_join(valid_trials_games_for_sbert |> select(dataset_id, game_id, room_num, target_image,
     later = round_num, trial_id_later = trial_id
   )) |>
-  lft_join(words |> select(dataset_id, trial_id_earlier = trial_id, log_words_earlier = log_words)) |>
+  left_join(words |> select(dataset_id, trial_id_earlier = trial_id, log_words_earlier = log_words)) |>
   left_join(words |> select(dataset_id, trial_id_later = trial_id, log_words_later = log_words)) |>
   select(
     sim_type, condition_id, game_id, stage_num, dataset_id, sim, earlier, later,

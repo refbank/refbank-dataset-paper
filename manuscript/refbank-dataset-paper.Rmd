@@ -8,7 +8,7 @@ author:
   email: vboyce@mit.edu
 - name: Alvin W. M. Tan
   affiliation: '1'
-- name: assorted middle authors go here
+- name: assorted middle authors go here (Jess, Benji, Fiona, Ryder ... )
   affiliation: '1'
 - name: Michael C. Frank
   affiliation: '1'
@@ -24,7 +24,7 @@ affiliation:
 authornote: |
   TODO
 abstract: |
-  [revisit and fix later] Language is an extensible form of communication that can be used to talk about even novel referents. Even when do canonical name exists, people rapidly form shared object-meaning mappings when they have repeated need to communicate about new things. The formation and adaptation of labels for initially novel referents is frequently studied in iterated reference games where a group of people communicate with each other about the same set of potential referents over a series of rounds. While iterated reference games are a common paradigm, the research questions and pre-processing and analysis approaches differ paper to paper so the results cannot be quantitatively synthesized. However, the text and meta-data itself is rich and has high value for re-analysis. We collect iterated reference game data from different papers together into a harmonized repository: Refbank. Refbank is a versioned repository containing transcripts and meta-data from 19 datasets. We explain the process for adding datasets to refbank, what the schema is and what information is stored, how researchers can access refbank, and we show some example analyses on Refbank data. Refbank allows for larger-scale analyses, the study of moderators, and training on reference game data.
+  [revisit and fix later] Language is an extensible form of communication that can be used to talk about even novel referents. Even when no canonical name exists, people rapidly form shared object-meaning mappings when they have repeated need to communicate about new things. The formation and adaptation of labels for initially novel referents is frequently studied in iterated reference games where a group of people communicate with each other about the same set of potential referents over a series of rounds. While iterated reference games are a common paradigm, the research questions and pre-processing and analysis approaches differ paper to paper so the results cannot be quantitatively synthesized. However, the text and meta-data itself is rich and has high value for re-analysis. We collect iterated reference game data from different papers together into a harmonized repository: Refbank. Refbank is a versioned repository containing transcripts and meta-data from 19 datasets. We explain the process for adding datasets to Refbank, what the schema is and what information is stored, how researchers can access Refbank, and we show some example analyses on Refbank data. Refbank allows for larger-scale analyses, the study of moderators, and training on reference game data.
 keywords: TODO
 wordcount: TODO
 bibliography: RefBank.bib
@@ -106,7 +106,6 @@ form <- function(model_form) {
 
 mod_loc <- "cached_model_files/mods"
 
-
 plot_preds <- function(df, dv, log_y=F, log_x=T) {
   df <- df |> filter(round_num <= 6)
   p <- ggplot() +
@@ -150,7 +149,7 @@ plot_preds_pos <- function(df, dv) {
     ggplot() +
       # geom_line(
       #   data = df |> filter(!is.na(dataset_id), modality == "oral"),
-      #   aes(x = round_num, y = mean, group = interaction(condition_id, pos)),
+      #   aes(x = rep_num, y = mean, group = interaction(condition_id, pos)),
       #   color = faint_colors[["oral"]]
       # ) +
       geom_line(
@@ -195,33 +194,32 @@ plot_preds_pos <- function(df, dv) {
 }
 ```
 
-
 ```{r}
 #library(trackdown)
-#update_file(here("manuscript/refbank-dataset-paper.Rmd"), hide_code=T)
+#upload_file(here("manuscript/refbank-dataset-paper.Rmd"))
 ```
 
 [TODO ugh I don't like writing pre-intro hooks] Language is an extensible communication system that can be used to communicate about new things even when there are not established terms for reference. The flexible use of language is often studied using iterated reference games, which represent a controlled way of studying how people communicate in the absence of codified labels, and how conventionalized labels form over repeated reference to the same targets. The simplicity and richness of the paradigm has made it a common tool for studying dialogue, convention formation, and now AI systems. The diversity of research topics means that many datasets could be reanalyzed to answer more questions. 
 
 Iterated reference games are a commonly used paradigm for studying adaptive language use. A *reference game* consists of a group of people communicating with each other about a set of potential referents. One person, the *describer*, has a specific designated target (usually pre-identified as the target by the experimenter) that they seek to communicate to the *matcher* (or matchers). This act of reference requires coordination between describer and matcher on a symbol--meaning alignment. *Iterated* reference games involve repeated reference to the same targets within the same group of people, so that a certain conversational history builds up that could shape the construction and understanding of later symbols. 
 
-Iterated reference games were introduced by Krauss and colleagues in the 1960s [@krauss1964; @krauss1966; @krauss1967] and popularized by Clark and colleagues in the 1980s [@clark1986]. This paradigm has been used to study a wide variety of communicative and linguistic phenomena. The primary targets of study are coordination and the formation of conventions or conceptual pacts [@dahan2025; @ghaleb2024; @eliav2023; @hawkins2020dynamics; @brennan1996; @metzing2003, among others]. Some studies focus particularly on iterated reference games as a way of studying collaboration in natural conversations [@dahan2024; @wilkes-gibbs1992; @schober1989; @clark1986]. Other studies focus on other aspects of coordination, including the negotiation of referring expressions [@knutsen2018; @bangerter2020] and the role of feedback [@krauss1966; @krauss1977;@foxtree2013]. Iterated reference games with multiple partners have been used to study how speakers design their utterances for their specific partners [@turner2021; @yoon2019audience; @yoon2014; @yoon2019contextual; @horton2005; @horton2002] and how speakers might generalize patterns of social conventions across interlocutors [@hawkins2021respect; @hawkins2020generalizing]. <!--Such games have also been used as the dialogue condition in studies on the differences between monologue and dialogue [@tolins2017; @branigan2011; @murfitt2001; @foxtree1999].--> <!--Further afield, iterated reference games have been used to study conversation and memory [@mckinley2017; @vanlangendonck2018], model cultural conflicts between merging teams [@weber2003], examine speech--gesture trade-offs [@deruiter2012], and study the effects of alcohol on social dynamics [@garrison2024]. --> While a majority of iterated reference game studies have focused on typical adult populations, they have also been used with children and teenagers [@leung2024; @branigan2016; @turner2021] and with older adults [@lysander2012;@horton2007;@hupet1993] to study cognitive and linguistic abilities across the lifespan. 
+Iterated reference games were introduced by Krauss and colleagues in the 1960s [@krauss1964; @krauss1966; @krauss1967] and popularized by Clark and colleagues in the 1980s [@clark1986]. This paradigm has been used to study a wide variety of communicative and linguistic phenomena. The primary targets of study are coordination and the formation of conventions or conceptual pacts [@dahan2025; @ghaleb2024; @eliav2023; @hawkins2020dynamics; @brennan1996; @metzing2003, among others]. Some studies focus particularly on iterated reference games as a way of studying collaboration in natural conversations [@dahan2024; @wilkes-gibbs1992; @schober1989; @clark1986]. Other studies focus on other aspects of coordination, including the negotiation of referring expressions [@knutsen2018; @bangerter2020] and the role of feedback [@krauss1966; @krauss1977;@foxtree2013]. Iterated reference games with multiple partners have been used to study how speakers design their utterances for their specific partners [@turner2021; @yoon2019audience; @yoon2014; @yoon2019contextual; @horton2005; @horton2002] and how speakers might generalize patterns of social conventions across interlocutors [@hawkins2021respect; @hawkins2020generalizing]. While a majority of iterated reference game studies have focused on typical adult populations, they have also been used with children and teenagers [@leung2024; @branigan2016; @turner2021] and with older adults [@lysander2012;@horton2007;@hupet1993] to study cognitive and linguistic abilities across the lifespan. 
 
 A few common patterns recur across papers -- participants tend to have high and increasing performance at selecting the correct targets, even as the amount of language produced decreases over repetition. There are also qualitative shifts in the type of language produced, as the descriptions seem to become more conventionalized, sometimes indexed as a transition to more abstract descriptions, and more definite and bare nouns [@clark1986; @isaacs1987; @brown-schmidt2016; @dahan2025]. 
 
 As reviewed above, different researchers have used iterated reference games with different setups and settings as a measure of communication. The breadth of studies in this domain presents an opportunity for evidence synthesis to understand various phenomena related to convention formation across different samples and experimental designs. In particular, there are a number of dimensions of variation in experimental design across such games, including different stimuli choices, different numbers of options, and different sizes and structures of groups. Running a new experiment across all these options would be expensive, so aggregating existing data provides a way to increase what we can learn from the data we already have, and allow for more pinpointed studies in the future [@koile2021].
 
-Systematic reviews are one possible method for evidence synthesis, and can be helpful to map the conceptual and methodological space [@bovet2023]; however, they do not offer quantitative aggregation of results. Another common approach for evidence synthesis is meta-analysis; unfortunately, the iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Additionally, language data of the kind generated in iterated reference games are very rich and amenable to many different possible analyses, which may not be captured by simple statistical aggregation.
+Compared to common alternatives, raw data aggregation is an especially useful method for iterated reference games. Systematic reviews are one possible method for evidence synthesis, and can be helpful to map the conceptual and methodological space [@bovet2023]; however, they do not offer quantitative aggregation of results, which is critical in psycholinguistic research since qualitative predictions are often similar across theories. Another common approach for evidence synthesis is meta-analysis; unfortunately, the iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Additionally, language data of the kind generated in iterated reference games are very rich and amenable to many different possible analyses, which may not be captured by aggregation into effect sizes, a necessary step in meta-analysis.
 
-A third form of aggregation is to collect raw data from similar paradigms and align them in a shared framework for mega-analysis. This approach enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. The mega-analytic approach has been used to pool data of various types in the language acquisition space, including transcripts of child--parent interactions [CHILDES, @macwhinney2000], parent reports of early vocabulary [wordbank,  @frank2017], and data from the looking-while-listening paradigm [peekbank, @zettersten2022]. Similar approaches are used in neuroscience such as in the OpenNeuro repository [@markiewicz2021].  [TODO are there other examples we should include?]
+In contrast,alignment of raw data in a shared framework (sometimes called “mega-analysis”)enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. The mega-analytic approach has been used to pool data of various types in the language acquisition space, including transcripts of child--parent interactions [CHILDES, @macwhinney2000], parent reports of early vocabulary [wordbank,  @frank2017], and data from the looking-while-listening paradigm [peekbank, @zettersten2022]. Similar approaches are used in neuroscience such as in the OpenNeuro repository [@markiewicz2021].  [TODO are there other examples we should include?]
 
-One advantage of harmonized dataset repositories is that new analytic approaches can be used on the data, including approaches that may not have been available when some data was originally collected (e.g., semantic vector embeddings), or approaches that rely on cross-study data [@frank2021]. 
+One advantage of harmonized dataset repositories is that new analytic approaches can be used on the data, including approaches that may not have been available when some data was originally collected (e.g., semantic vector embeddings), or approaches that rely on cross-study data [@frank2021]. Many of the images used in iterated reference games appear in the Kilogram dataset [@ji2022] which contains whole-image and parts-level descriptions for over a thousand tangram images. Thus a harmonized dataset of reference game data can also be connected with this other resource to enable image-specific predictions. 
 
 Second, mega-analysis retains individual- and dyad-level patterns; this feature allows for the analysis of individual differences, as well as generative and computational approaches to understanding referential communication in iterated reference games, which require raw data to compare against. For example, iterated reference games can be used to assess the extent to which language models are able to communicate like humans, and actual trial-by-trial data are the most useful for such comparisons [CITE]. 
 
 Third, data aggregation allows for data reuse for purposes other than analysis. In particular, iterated reference game data can serve as a resource for future experiment design -- they can shed light on what aspects of design may be more or less impactful, and may also allow for the selection of stimuli that have desirable properties. Aggregation can also highlight underexplored regions of the experiment design space, suggesting new avenues for iterated reference game research.
 
-Iterated reference games have been widely used to study convention formation, with each experiment manipulating a small set of possible experimental design variables. Nevertheless, the underlying language data (and associated metadata) from iterated reference games constitute a high value corpus for studying not only convention formation, but also audience design, metaphor, semantic and syntactic alignment, and referring expressions; they can also be used as a benchmark for computational models of pragmatics. 
+
 
 ```{r}
 version <- "v13.0"
@@ -240,13 +238,15 @@ dataset_summary_stats <- condition_summary |> summarize(
 )
 ```
 
-To enable to reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}). In the following sections, we explain the schema of Refbank and what information it contains, describe how researchers can access the data, and show a few analyses on Refbank data to demonstrate its utility. 
+To enable the reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}). In the following sections, we explain the schema of Refbank and what information it contains, describe how researchers can access the data, and show a few analyses on Refbank data to demonstrate its utility. 
 
 # Design and technical approach
 
-Refbank was constructed to align with the FAIR principles for domain-specific data repositories: findability, accessibility, interoperability, and reusability [@wilkonson2016]. It is structured as a relational database with different tables encoding different types of data. Because iterated reference games can vary from each other in different ways, we needed a schema that could accommodate different set-ups while still unifying the information for cross-dataset comparison. 
+Refbank was constructed to align with the FAIR principles for domain-specific data repositories: findability, accessibility, interoperability, and reusability [@wilkonson2016]. Refbank data is stored on Redivis, a platform for hosting scientific data. A Redivis account can be made freely and is used to access the data. Data is versioned, so that either the current version or a previous version of data can be used (for reproducibility). 
 
-A first question is how to define an iterated reference game. For Refbank purposes, we consider reference games where at least some of the stimuli are repeated (in at least some conditions), and change across repetition is of interest. The describer must be a human participant (not an artificial intelligence agent or a confederate). Natural language must be used to communicate. 
+ It is structured as a relational database with different tables encoding different types of data. Because iterated reference games can vary from each other in different ways, we needed a schema that could accommodate different set-ups while still unifying the information for cross-dataset comparison. 
+
+A first question is how to define an iterated reference game. For Refbank purposes, we consider reference games (i.e., games where participants provide linguistic expressions to name stimuli so other participants can select them from a group) where at least some of the stimuli are repeated (in at least some conditions), and change across repetition is of interest. Natural language must be used to communicate. 
 
 ## Core tables
 The core information in Refbank is stored in three tables: Trials, Messages, and Choices. The key unit in our schema is the trial, which we define as the actions associated with picking out one target image out of a pool of options. Each trial can be associated with messages (spoken utterances or typed messages from the describer and matchers) and choices (which matcher selected which option).
@@ -254,13 +254,13 @@ The core information in Refbank is stored in three tables: Trials, Messages, and
 ### Trials
 Each row in the Trials table contains information about a single trial including what was happening that trial and how it fits into the larger structure of a game. 
 
-Each trial is associated with a describer and a list of matchers via their player IDs. Each trial has a target image (seen by the describer) and a set of image options (that matchers choose among), linked via their image IDs. Each trial is labelled as either an "order" trial or a "match" trial. In matching trials, a given target is specifically highlighted and the matcher picks one and then moves on. In ordering, the goal is to reproduce a given order of the set (or subset) of targets. We separate these into trials, but there is flexibility in that a matcher might revise their choice to one trial after later trials.
+Each trial is associated with a describer and a list of matchers via a set of unique identifiers (player IDs). Each trial has a target image (seen by the describer) and a set of image options (that matchers choose among), linked via their image IDs. We also record the option size -- how many images were possibilities that trial.  Each trial is labelled as either an "order" trial or a "match" trial. In matching trials, a given target is specifically highlighted and the matcher picks one and then moves on to the next trial. In ordering, the goal is to reproduce a given order of the set (or subset) of targets. We separate these into one trial per target (e.g., ordering 12 tangrams would correspond to 12 trials), but there is flexibility in that a matcher might revise their choice to one trial after later trials within the same round.
 
-The basic structure of an iterated reference game is a series of trials (acts of picking out different targets) that are nested within repetitions through the target set (sometimes called blocks or rounds). 
+The basic structure of an iterated reference game is a series of trials (acts of picking out different targets) that are nested within rounds (sometimes called blocks or repetitions), where each round typically involves one trial per  target in the target set. In a small number of cases, the targets for a round were sampled from a bigger target set, and thus participants did not see all possible targets each round (e.g., if there are 12 targets in total, but participants only saw 3 per round).
 
 The Trials table also contains information about the games that trials are nested within. Each game is a set of people who play with each other, possibly on a network of interlocking pairs or with substitutions (see metadata). Following @hawkins2021respect, we include a room number for when there are two trials going on in parallel in the same game (this occurs on network games where two pairs play and then swap). 
 
-If there is a change in how the game is working, such as a swap in partners, or in the pool of stimuli, we define that as a new stage, recorded via the stage number. For instance, the network swap games have multiple stages, partner swap designs have multiple stages, and some games with entrainment and test phases are multi-stage and games with a separate "generalization" round have multiple stages. In general, restricting to only "stage 1 data" (as is possible in the visualization app and via filtering downloaded data) allows for a more even comparison across games. 
+If there is a change in how the game is working, such as a swap in partners, or in the pool of stimuli, we define that as a new stage, recorded via the stage number. For example, some experiments [@hawkins2021respect, @hawkins-otherone] have groups of 4 people play with each other in a round-robin design with people play with one partner for a few round and then swap. In these cases, each set of pairings is a stage, and the first stage of data can be treated as coming from pairs (since no partner switches have yet occurred). The stage designation is also used for experiment designs with entrainment and test phases [@yoon, @etc] and experiments that have a separate "generalization" round at the end with new stimuli [@hawkins-whatever]. In general, restricting to only "stage 1 data" (as is possible in the visualization app and via filtering downloaded data) allows for a more even comparison across games. 
 
 While the trials table includes information about the setup of the trial, the actual content of trial consists of two kinds of actions: messages and choices. 
 
@@ -268,73 +268,15 @@ While the trials table includes information about the setup of the trial, the ac
 Each message is one turn of dialogue or one message that was typed in a chat window, depending on the game modality. A message has text, the content of the message, and is associated with a player ID, who produced the message. Messages are also associated with the player's role (either matcher or describer). All messages have a trial ID (linking to the trials table). Off-topic messages such as chit chat or meta-discussion about strategy are included, but marked via a message irrelevant column, to allow for filtering. There is also a time stamp field for when the timing of a message within a trial is known. We do not remove off-topic messages, or trim messages with some extraneous content, but we do use spelling-corrected versions of written messages where available. 
 
 ### Choices
-Player's selections are recorded in a choices table. Each choice is tied to a given trial and a given player ID. Each choice is associated with a selected target denoted with choice ID that matches the image ID (and can be compared with the trials target ID). There is again the option for a time stamp to specify how long into the trial the selection was made. 
+Players’ selections are recorded in a choices table. Each choice is tied to a given trial and a given player ID. Each choice is associated with a selected target denoted with choice ID that matches the image ID (and can be compared with the trials target ID). There is again the option for a time stamp to specify how long into the trial the selection was made. 
 
 In order games, we only record the final choices players made for each position. 
 
-```{r interface, fig.env = "figure", fig.pos = "t!", out.width="\\textwidth", fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "Schematic illustration of the different tables containing different pieces of data about the iterated reference games and how they connect. Arrows show connections between rows that key into other tables. Redundant connections back to the dataset table are not shown. ", cache=FALSE}
+```{r interface, fig.env = "figure", fig.pos = "t!", out.width="\\textwidth", fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "Schematic illustration of the different tables containing different pieces of data about the iterated reference games and how they connect.", cache=FALSE}
 
 knitr::include_graphics("figs/schema_v3_solarized.svg")
 
-
 ```
-
-## Metadata
-In addition to the core information about what happened during the game, we have several tables for metadata about the players, images, and experimental features of the study. 
-
-### Datasets
-The datasets table contains only bibliographic information, linking our dataset ID to the full and short citations for that dataset. 
-
-### Conditions
-Iterated reference games can vary along a number of design features. Most of these factors are coded in the "conditions" table. We code several metadata factors as condition information. These include:
-
-* language: the language in which the iterated reference game was conducted 
-
-* group-size: the number of players in a game, where we define game as a set of players who interact with each other but no one else
-
-* partner constancy: whether or not the same set of people is active the entire game. If there are changes in who is interacting, there is not partner constancy. 
-
-* role constancy: roles are constant if each player is only the describer or a matcher when they are active; roles are not constant if a matcher becomes a describer or vice versa. 
-
-* backchannel: designs vary on how the matchers may communicate with the describer. We break this up into 3 levels: full if there are no restrictions on communication (within the modality), limited if there is some communication (example, if only one message can be sent), and none if there is no communication channel from matcher to describer. 
-
-* feedback: we use "feedback" to refer to information players receive on the correctness of their selections from the experimenters. In full feedback, after each trial, players learn if the selection(s) were correct or incorrect and what the correct target was. In limited feedback, there is some correctness feedback, but it doesn't include what the correct target was, or is provided after every repetition, perhaps as a total correct. In no feedback, players receive no feedback during the game. 
-
-* modality: We code the communication modality into three levels: oral-in-person when the participants are talking and physically in the same room, whether or not they have visual access to each other; oral-remote when the participants are talking over some sort of connection (audio signal between phone booths, headsets in separate fMRI machines, etc). We use written when the messages are typed, like via a chatbox. 
-
-* confederates: we include an option for noting if one or more of the participants was not a "real" participant -- i.e. was an experimenter or a bot. Iterated reference games involving some artificial intelligence agents are a topic of recent study, and Refbank is ready to include those studies, and also mark them so then can be treated separately or excluded as appropriate for the research goals. 
-
-* prior-relationship: another possible source of design variation is whether the pair or group of participants have prior history with each other, which could shape their interactions and convention formation. In some cases, the populations were mixed, either with an explicit balance between familiar pairs or stranger pairs, or because the recruitment pool included some classmates and some strangers. 
-
-### Players
-The player table contains some basic demographic information about participants when available. It can be linked via the player IDs. We track players' age, gender, native language, race, and level of education, although these are not always available across datasets.
-
-### Images 
-Each image has a unique image ID for cross referencing with the trials and choices tables. We also record image type (tangram, line drawing, fribble, etc). For tangram images that are in the Kilogram dataset [@ji2022], we include the Kilogram ID for cross-referencing. When we have access to the actual image file, we store these and include their image path. The same images are often reused across different datasets, and the image records are deduplicated so multiple papers may refer to the same image ID. 
-
-## Derived
-The core and metadata tables represent the raw data that we import from individual studies. We also have a workflow for processing the raw data and creating derivative measures that may be commonly of use to researchers. These derivative tables are created via a Redivis workflow. For example, word counts can be derived from the text data in messages but are a common enough metric that we calculate them for a summary table. Other derived tables contain vector embeddings of the messages from Jina AI embeddings [@akram2026], cosine similarities between the embeddings, and Stanza parses of the messages [@qi2020]. In producing these measures, we apply our own light exclusions, requiring that the describer did produced descriptions, and that there are at least 2 "blocks" worth of trials for that game. As additional processing pipelines are developed, we may add more derived tables. 
-
-## Processing 
-We started developing Refbank with the iterated reference games that were conducted by members of the team, or where the data was already posted publicly. We then contacted authors of a number of iterated reference game papers asking if they were willing to share their data. 
-
-We received data in a variety of formats, including pre-cleaned tabular data, output from experimental software like Empirica [@almaatouq2021], transcripts, and raw audio files. We transcribed raw audio using WhisperX [large-v3, @bain2023]. When transcripts or transcribed audio did not have trial boundaries, we hired a contractor to annotate trial boundaries by hand (and confirmed high agreement with an author) or annotated trial boundaries by hand. When target to image correspondence was not provided, we marked the correspondences we thought were most likely. In the import repository, each dataset has a README including citation information, the abstract, the key facts about the study design, and notes about any inferences or processing we had to do as part of the import process. 
-
-Datasets also varied in completeness; some datasets had timing information and demographics, whereas in others only the transcripts were available, or only selection data. We have imported what was available, but due to incomplete data, some datasets might not be applicable for all analyses. 
-
-We imported trials from all games, including games that were excluded in the initial studies. We mark their exclusion status and reason, but allow users of Refbank to impose their own uniform exclusion criteria. 
-
-Metadata was coded from the data and from the paper or write-up. In a few cases, condition information was not fully specified in the paper. In these cases, we either talked with the authors, or made our best guesses from the paper. When there were borderline cases that were not explicit we inferred them and made a note in the README. 
-
-Some of the contributed datasets had additional information beyond the shared metrics. We do not include these additional data (such as pre- or post- tests, mouse or eye tracking, fMRI data, or audio files). 
-
-## Current datasets
-
-Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets including `r dataset_summary_stats$words[1] |> scales::comma()` words from `r dataset_summary_stats$trials[1] |> scales::comma()` referential trials from `r dataset_summary_stats$games[1] |> scales::comma()` games and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}).
-
-These datasets are primarily in English, although Refbank includes one dataset each in French, Swiss German, and Dutch, and one dataset with codeswitching between Spanish and English. Datasets are primarily made up of adult participants, although 3 datasets include data from children: two of just children interacting with peers [@branigan2016;@boyce2026], and one of child--parent pairs [@leung2024]. Datasets vary in their design features (Table \ref{tab:tab1}). These dataset characteristics reflect both the distribution of papers published and what datasets were made available to Refbank. We welcome any additional datasets, including unpublished datasets. 
-
-[unclear where to stick this] Transcripts, selections, and metadata are not human subjects data under ... [TODO someone write this], and so likely can be shared. (could crib from the peekbank behavioral methods paper for how they framed this!)
 
 ```{r tab1}
 dataset_features <- condition_summary |>
@@ -383,28 +325,27 @@ game_length <- condition_summary |>
   group_by(dataset_id, short_cite, condition_label) |>
   summarize(
     trials_per_game = sum(trials_per_game),
-    reps_per_game = sum(reps_per_game)
+    rounds_per_game = sum(rounds_per_game)
   ) |>
   group_by(dataset_id, short_cite) |>
   summarize(
     min_trials = min(trials_per_game),
     max_trials = max(trials_per_game),
-    min_reps = min(reps_per_game),
-    max_reps = max(reps_per_game)
+    min_rounds = min(rounds_per_game),
+    max_rounds = max(rounds_per_game)
   ) |>
   mutate(
     trials_per_game = case_when(
       min_trials == max_trials ~ str_c(min_trials),
       T ~ str_c(min_trials, " - ", max_trials)
     ),
-    reps_per_game = case_when(
-      min_reps == max_reps ~ str_c(min_reps),
-      T ~ str_c(min_reps, " - ", max_reps)
+    rounds_per_game = case_when(
+      min_rounds == max_rounds ~ str_c(min_rounds),
+      T ~ str_c(min_rounds, " - ", max_rounds)
     )
   ) |>
-  select(-min_trials, -max_trials, -min_reps, -max_reps) |>
+  select(-min_trials, -max_trials, -min_rounds, -max_rounds) |>
   select(-dataset_id)
-
 
 data_features_all <- dataset_features |>
   # left_join(game_length) |>
@@ -444,8 +385,70 @@ data_features_all |>
   ) |>
   kable_styling(font_size = 9)
 
-
 ```
+  
+
+## Metadata
+In addition to the core information about what happened during the game, we have several tables for metadata about the players, images, and experimental features of the study. 
+
+### Datasets
+The datasets table contains only bibliographic information, linking our dataset ID to the full and short citations for that dataset. 
+
+### Conditions
+Iterated reference games can vary along a number of design features. Most of these factors are coded in the "conditions" table. We code several metadata factors as condition information. These include:
+
+* language: the language in which the iterated reference game was conducted 
+
+* group-size: the number of players in a game, where we define game as a set of players who interact with each other but no one else
+
+* partner constancy: whether or not the same set of people is active the entire game. If there are changes in who is interacting, there is not partner constancy. 
+
+* role constancy: roles are constant if each player is only the describer or a matcher when they are active; roles are not constant if a matcher becomes a describer or vice versa. 
+
+* backchannel: designs vary on how the matchers may communicate with the describer. We break this up into 3 levels: full if there are no restrictions on communication (within the modality), limited if there is some communication (example, if only one message can be sent), and none if there is no communication channel from matcher to describer. 
+
+* feedback: we use "feedback" to refer to information players receive on the correctness of their selections from the experimenters. In full feedback, after each trial, players learn if the selection(s) were correct or incorrect and what the correct target was. In limited feedback, there is some correctness feedback, but it doesn't include what the correct target was, or is provided after every repetition, perhaps as a total correct. In no feedback, players receive no feedback during the game. 
+
+* modality: We code the communication modality into three levels: oral-in-person when the participants are talking and physically in the same room, whether or not they have visual access to each other; oral-remote when the participants are talking over some sort of connection (audio signal between phone booths, headsets in separate fMRI machines, etc). We use written when the messages are typed, like via a chatbox. 
+
+* confederates: we include an option for noting if one or more of the participants was not a "real" participant -- i.e. was an experimenter or a bot. So far, this is relevant to only one study in Refbank, but as iterated reference games involving some artificial intelligence agents are a topic of recent study, we anticipate more might be included in the future. By marking them with a metadata flag, these games can easily be treated separately or excluded as appropriate for the research goals. Games with confederates are excluded from the visualization app. 
+
+* prior-relationship: another possible source of design variation is whether the pair or group of participants have prior history with each other, which could shape their interactions and convention formation. In some cases, the populations were mixed, either with an explicit balance between familiar pairs or stranger pairs, or because the recruitment pool included some classmates and some strangers. 
+
+### Players
+The player table contains some basic demographic information about participants when available. It can be linked via the player IDs. We track players' age, gender, native language, race, and level of education, although these are not always available across datasets.
+
+### Images 
+Each image has a unique image ID for cross referencing with the trials and choices tables. We also record image type (tangram, line drawing, fribble, etc). For tangram images that are in the Kilogram dataset [@ji2022], we include the Kilogram ID for cross-referencing. When we have access to the actual image file, we store these and include their image path. The same images are often reused across different datasets, and the image records are deduplicated so multiple papers may refer to the same image ID. 
+
+## Derived
+The core and metadata tables represent the raw data that we import from individual studies. We also have a workflow for processing the raw data and creating derivative measures that may be commonly of use to researchers. These derivative tables are created via a Redivis workflow. For example, word counts can be derived from the text data in messages but are a common enough metric that we calculate them for a summary table. Other derived tables contain processed representations of the describer’s messages, including semantic vector embeddings [using Jina AI embeddings, @akram2026]  and dependency parses and part of speech tags [using Stanza, @qi2020].  In producing these measures, we apply our own light exclusions, requiring that the describer did produce descriptions, and that there are at least 2 repetitions worth of trials for that game. As additional processing pipelines are developed, we may add more derived tables. 
+
+## Dataset processing  and import 
+We started developing Refbank with the iterated reference games that were conducted by members of the team, or where the data was already posted publicly. We then contacted authors of a number of iterated reference game papers asking if they were willing to share their data. 
+
+Rather than hand create a linked set of tables in the Refbank format, we took raw datasets and reformatted them into one wide table with one row per choice or message in individual R import scripts. We then ran a validation and import script that checked the columns and values and split the wide table into the linked tables for use with redivis. We have another script that reruns all dataset import scripts, does more validation,  creates unique identifiers across datasets, and upload the tables to redivis. This script is run whenever we release a new version of Refbank (for instance when a new dataset is added). 
+
+We received data in a variety of formats, including pre-cleaned tabular data, output from experimental software like Empirica [@almaatouq2021], transcripts, and raw audio files. Datasets varied in how much effort they took to import and align to the Refbank schema. The easiest datasets already had trial-level data in an easy to parse format (csv or json) where we only had to reshape the data and rename the columns to match the Refbank import schema. This was the case for many of the more recent datasets with online data collection and typed descriptions. 
+
+Datasets were more difficult to import if there were file parsing complications (conversion from .doc files), if the dataset needed to be transcribed, and if we had to infer trial boundaries, speaker identities, and target images. These more difficult imports were often from spoken datasets that are more difficult to collect and thus have higher re-use value.  
+
+We transcribed raw audio for 2 datasets [@dahan2023, @hawkins2026] using WhisperX [large-v3, @bain2023]. When transcripts or transcribed audio did not have trial boundaries, we hired a contractor to annotate trial boundaries by hand (and confirmed high agreement with an author) or annotated trial boundaries by hand [5 datasets; @bangerter2000, @bangerter2020, @dahan2023; @hawkins2026; @hawkins2020] . When we had the pool of target images but did not know which image went with which trial (or target label), we marked the correspondences we thought were most likely [2 datasets, @bangerter2000;@branigan2016] . In the import repository, each dataset has a README including citation information, the abstract, the key facts about the study design, and notes about any inferences or processing we had to do as part of the import process. 
+
+Datasets also varied in completeness; some datasets had timing information and demographics, whereas in others only the transcripts were available, or only selection data. We have imported what was available, but due to incomplete data, some datasets might not be applicable for all analyses. 
+
+We imported trials from all games, including games that were excluded in the initial studies. We mark their exclusion status and reason, but allow users of Refbank to impose their own uniform exclusion criteria. 
+
+Metadata was coded from the data and from the paper or write-up. In a few cases, condition information was not fully specified in the paper. In these cases, we either talked with the authors, or made our best guesses from the paper. When there were borderline cases that were not explicit we inferred them and made a note in the README. 
+
+Some of the contributed datasets had additional information beyond the shared metrics. We do not include these additional data (such as pre- or post- tests, mouse or eye tracking, fMRI data, or audio files). 
+
+## Current datasets
+
+Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets including `r dataset_summary_stats$words[1] |> scales::comma()` words from `r dataset_summary_stats$trials[1] |> scales::comma()` referential trials from `r dataset_summary_stats$games[1] |> scales::comma()` games and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}).
+
+These datasets are primarily in English, although Refbank includes one dataset each in French, Swiss German, and Dutch, and one dataset with codeswitching between Spanish and English. Datasets are primarily made up of adult participants, although 3 datasets include data from children: two of just children interacting with peers [@branigan2016;@boyce2026], and one of child--parent pairs [@leung2024]. Datasets vary in their design features (Table \ref{tab:tab1}). These dataset characteristics reflect both the distribution of papers published and what datasets were made available to Refbank. We welcome any additional datasets, including unpublished datasets. 
+
 
 
 ```{r tab2}
@@ -472,11 +475,10 @@ data_quantity_total <- data_quantity |>
   select(-dataset_id) |>
   left_join(dataset_features |> select(
     Paper = short_cite, `Group size` = group_size,
-    `Options/trial` = option_set_size
+    `Option set size` = option_set_size
   )) |>
   select(-total_num_selections) |>
-  mutate(across(c(trials_per_game, reps_per_game, `Group size`, `Options/trial`), \(x) ifelse(is.na(x), "", x)))
-
+  mutate(across(c(trials_per_game, rounds_per_game, `Group size`, `Option set size`), \(x) ifelse(is.na(x), "", x)))
 
 data_quantity_total |>
   mutate(across(where(is.numeric), \(x) format(x, big.mark = " ", scientific = FALSE))) |>
@@ -487,8 +489,8 @@ data_quantity_total |>
     booktabs = TRUE,
     escape = F,
     linesep = "",
-    caption = "Amount of data from each dataset, and the amount of data per game in each dataset. Ranges indicate that the value varied across conditions within the dataset. Options per trial in parentheses indicate that a minority of trials has this other number of image options. ",
-    col.names = linebreak(c("Paper", "Total\ngames", "Total\nplayers", "Total\ntrials", "Total\nwords", "Trials/\ngame", "Reps/\ngame", "Group\nsize", "Option\nper trial"), align = "c"),
+    caption = "Amount of data from each dataset, and the amount of data per game in each dataset. Ranges indicate that the value varied across conditions within the dataset. Option set sizes in parentheses indicate that a minority of trials has this other option set size. ",
+    col.names = linebreak(c("Paper", "Total\ngames", "Total\nplayers", "Total\ntrials", "Total\nwords", "Trials/\ngame", "Rounds/\ngame", "Group\nsize", "Option\nset size"), align = "c"),
     align = c("l", "r", "r", "r", "r", "r", "r", "r", "r")
   ) |>
   kableExtra::row_spec(
@@ -501,26 +503,7 @@ data_quantity_total |>
 
 ```
 
-## Using Refbank
-
-Refbank data is stored on Redivis, a platform for hosting scientific data. A Redivis account can be made freely and is used to access the data. Data is versioned, so that either the current version or a previous version of data can be used (for reproducibility). 
-
-There are several ways of interacting with the Refbank data. We recommend using the observable application for quick visualizations and exploration of moderators or different datasets, via the Refbank website (refbank.stanford.edu). For analyzing data, the data tables can be downloaded via the Redivis API for Python, or using `refbankr`, a custom R package. `refbankr` functions can be used to pull any set of datasets, any version, and also to pull a sample of the data for checks. 
-
-Redivis has built-in methods of filtering, exploring, and downloading data, via its viewers and workflow creation, where a chain of SQL transforms, and R and Python notebooks can be used to process data. Redivis allows for the creation of workflows that pull from datasets, and for SQL-type queries over datasets. 
-
-Different workflows support different possible uses including scientific research and training. The API format makes them usable including in larger pipelines and is compatible with coding agents [cite anthropic blogpost?]. 
-
-\smallskip
-
-# Analyses
-
-We show a few illustrative analyses of Refbank data to illustrate the use of aggregated data. 
-For these analyses, we only considered games and targets where the target was referred to at least 3 times during the game and where message data was available. <!-- VB note: I think this basically covers the min of at least 2 full repetitions of data  that was used as well.-->
-
-We also restrict to the first stage of each experiment; this is the part of the experiment before any changes in partners or the set of stimuli being used. Thus, for datasets like @hawkins2020generalizing, even though the overall design has games of 4 people interacting as a network of pairs, for the first stage, each game can be treated as two independent pairs. Similarly, games that eventually switch for a new set of stimuli look like typical games without stimuli swaps for the repetitions before that happens. 
-
-```{r accred, fig.width=6, fig.height=3, fig.cap="Model predictors for accuracy (A) and describer utterance length in number of words(B). Each condition level estimate is shown in a faint line, and the generalized prediction is shown in blue, with a 95% CI."}
+```{r accred, fig.width=6, fig.height=3, fig.cap="Model predictors for accuracy (A) and describer utterance length (B). Each condition is shown in a faint line, and the generalized prediction is shown in blue, with a 95% CI."}
 
 acc_plot <- read_rds(here(mod_loc, "predicted", "acc_mod_log_rep.rds")) |>
   filter(!is.na(dataset_id) | option_set_size == 12) |>
@@ -533,6 +516,27 @@ red_plot <- read_rds(here(mod_loc, "predicted", "red_mod_log_log.rds")) |>
 plot_grid(acc_plot, red_plot, labels = "AUTO")
 ```
 
+## Using Refbank
+
+
+
+
+There are several ways of interacting with the Refbank data. We recommend using the observable application for quick visualizations and exploration of moderators or different datasets, via the Refbank website (refbank.stanford.edu). For analyzing data, the data tables can be downloaded via the Redivis API for Python, or using `refbankr`, a custom R package. `refbankr` functions can be used to pull any set of datasets, any version, and also to pull a sample of the data for checks. 
+
+Redivis has built-in methods of filtering, exploring, and downloading data, via its viewers and workflow creation, where a chain of SQL transforms, and R and Python notebooks can be used to process data. Redivis allows for the creation of workflows that pull from datasets, and for SQL-type queries over datasets. 
+
+Different workflows support different possible uses including scientific research and training. The API format makes them usable including in larger pipelines and is compatible with coding agents [cite anthropic blogpost?]. 
+
+\smallskip
+
+# Analyses
+
+We show a set of analyses of Refbank data to illustrate the use of aggregated data. 
+
+For these analyses, we only considered games and targets where the target was referred to at least 3 times during the game and where message data was available. <!-- VB note: I think this basically covers the min of at least 2 full repetitions of data  that was used as well.-->
+
+We also restrict to the first stage of each experiment; this is the part of the experiment before any changes in partners or the set of stimuli being used. Thus, for datasets like @hawkins2020generalizing, even though the overall design has games of 4 people interacting as a network of pairs, for the first stage, each game can be treated as two independent pairs. Similarly, games that eventually switch for a new set of stimuli look like typical games without stimuli swaps for the repetitions before that happens. 
+
 ## Accuracy
 
 ```{r}
@@ -540,7 +544,6 @@ plot_grid(acc_plot, red_plot, labels = "AUTO")
 dataset_info_accuracy <- read_rds(here("cached_model_files/data_for_mods/per_matcher_for_model.rds")) |> group_by(dataset_id) |> tally()
 
 ```
-
 
 A common finding across iterated reference games is that players are usually quite accurate at communicating and selecting the correct targets -- that is, they succeed at reference. When participants are not at ceiling initially, they tend to improve rapidly over repetition. A high level of accuracy is taken as a pre-condition for interpreting the language data as being a sign of conventionalization. 
 
@@ -559,7 +562,7 @@ To aggregate across datasets, we ran a mixed-effect logistic regression model `r
 
 A very consistent finding across many iterated reference games is that the amount of language used in descriptions declines across repetitions. However, while the trend is frequently observed, the specific mechanisms are not known, and the functional relationship between repetition and quantity of words has not been firmly established. @bogels2026 compared a linear model and a log-log (power law) model on two datasets [@hawkins2020dynamics; @eijk2022], and found that log-log model provided a better fit to the data. 
 
-While there are many possible functional relationships between repetition and number of words, here we consider four options in order to determine what general type of shape fits the data best. By using a larger number of datasets that vary in different ways, we avoid overfitting to the pecularities of any one dataset. 
+While there are many possible functional relationships between repetition and number of words, here we consider four options in order to determine what general type of shape fits the data best. By using a larger number of datasets that vary in different ways, we avoid overfitting to the peculiarities of any one dataset. 
 
 ```{r, eval=F}
 loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
@@ -573,7 +576,6 @@ loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig,
                  lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> 
   write_rds(here(mod_loc, "summary", "loo.rds"))
 ```
-
 
 ```{r}
 loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
@@ -594,45 +596,41 @@ Using the best fitting log-log model, we confirm the common finding that there i
 
 ## Reduction moderators
 
-One analysis enabled by the aggregation of data across studies is the examination of the possible effects of experiment design features on the rate of reduction -- that is, whether some conditions result in faster reduction than others. For this analysis, we used the log(words)~log(rep) model and extracted the random slopes for log-rep-num for each condition. We then predicted the slope value as a function of experiment design features: number of players, option set size, image type, partner constancy, role constancy, population (adults vs children), modality, availability of feedback, and availability of matcher backchanneling. Because of the large number of possible moderators, we used XGBoost, a gradient-boosted tree approach to prediction. This method involves fitting a large number of decision trees based on the values of the predictors to predict the by-condition slopes, thereby allowing arbitrary non-linearities and interactions among the predictors.
+One analysis enabled by the aggregation of data across studies is the examination of the possible effects of experiment design features on the rate of reduction -- that is, whether some conditions result in faster reduction than others. For this analysis, we used the log(words)~log(rep) model and TODO 
 
-```{r red-mod, fig.width=6, fig.height=3, fig.cap="Mean absolute SHAP values for experiment design features on the slope of reduction. Higher values indicate greater influence on slope predictions."}
-# plot_lab <- \(x) {x |> str_replace_all("_", " ") |> str_to_sentence()}
-# log_log_shap <- readRDS(here(mod_loc, "log_log_shap.rds"))
-# log_log_shap_plot <- shapviz::sv_importance(log_log_shap) +
-#   scale_y_discrete(labels = plot_lab)
-# log_log_shap_plot
+```{r red-mod, fig.width=6, fig.height=3, fig.cap="TODO"}
 
-read_rds(here(mod_loc, "summary", "red_mod_log_log_all_moderators.rds")) |> 
-  filter(str_detect(Term, "log_round_num:")) |> 
-  mutate(predictor=str_replace(Term, "log_round_num:", "")) |> 
+
+read_rds(here(mod_loc, "summary", "red_mod_log_log_all_moderators.rds")) |>
+  filter(str_detect(Term, "log_round_num:")) |>
+  mutate(predictor=str_replace(Term, "log_round_num:", "")) |>
   mutate(predictor=case_when(
     predictor=="role_constancyyes" ~ "constant role",
     predictor=="population_binchild" ~ "child participants",
     predictor=="modality_binoral" ~ "oral modality",
     predictor=="log_option_set_size" ~ "log option set size",
     predictor=="log_n_players" ~ "log n players",
-    predictor=="image_typephotograph" ~ "photograph images",
-    predictor=="image_typelinedrawing" ~ "line drawing images",
-    predictor=="image_typefribble" ~ "fribble images",
     predictor=="feedback_binrestricted" ~ "no or limited feedback",
     predictor=="backchannel_binrestricted" ~ "no or limited backchannel",
-    predictor=="backchannel_binrestricted:modality_binoral" ~ "backchannel x oral"
-  )) |> arrange(Estimate) |> 
+  )) |> arrange(Estimate) |>
   ggplot(aes(x=reorder(predictor, Estimate, mean), y=Estimate, ymin=lower, ymax=upper))+geom_pointrange()+geom_hline(yintercept=0)+coord_flip()+labs(x="predictors", y="change in slope (negative=faster)")
 ```
 
-Figure \ref{fig:red-mod} shows the mean absolute SHAP values for experiment design features on the slope of reduction. The SHAP values are an indicator of the importance of each predictor, such that higher values reflect a greater influence of that variable on the predicted value. The most influential feature by far was backchanneling, such that full backchanneling resulted in faster reduction; this result reflects the importance of bidirectional communication on converging to a common ground. Population and image type were also important predictive features, and all other features had close to no effect on the predictions. 
+Figure \ref{fig:red-mod} shows TODO
 
-## Semantic embedding similiarities
+## Semantic embedding similarities
 
 ```{r}
 to_next_stats <- read_rds(here(mod_loc, "summary", "to_next_mod.rds"))
 diverge_stats <- read_rds(here(mod_loc, "summary", "diverge_mod.rds"))
 
 to_next_form <- read_rds(here(mod_loc, "formulae", "to_next_mod.rds"))
+to_next_form_words <- read_rds(here(mod_loc, "formulae", "to_next_words_mod.rds"))
 diverge_form <- read_rds(here(mod_loc, "formulae", "diverge_mod.rds"))
+diverge_form_words <-read_rds(here(mod_loc, "formulae", "to_next_words_mod.rds"))
 
+to_next_stats_words <-  read_rds(here(mod_loc, "summary", "to_next_words_mod.rds"))
+diverge_stats_words <- read_rds(here(mod_loc, "summary", "diverge_words_mod.rds"))
 ```
 
 One way of quantifying the semantic trajectories of descriptions over repetitions is to embed the descriptions in a semantic vector space and then quantify similarities of pairs of descriptions using cosine similarity or another distance metric. This approach is used in analyses of dialogue trajectories [@reece2023; @fischer2024; CITES]. 
@@ -647,20 +645,20 @@ As games converge to a variety of different, arbitrary conventionalized names, t
 
 to_next_plot <- read_rds(here(mod_loc, "predicted", "to_next_mod.rds")) |>
   filter(round_num < 6) |>
-  plot_preds("Reduction log lin") +
+  plot_preds("Reduction log lin") + 
   labs(x = "Repetition Number", y = "Cosine similarity") + 
-  coord_cartesian(ylim = c(.5, 1), xlim = c(1, 5)) + 
+  coord_cartesian(ylim = c(0, 1), xlim = c(1, 5)) + 
   labs(title = "Within groups")
-
 
 diverge_plot <- read_rds(here(mod_loc, "predicted", "diverge_mod.rds")) |> 
   plot_preds("Reduction log lin") + 
   labs(x = "Repetition Number", y = "Cosine similarity") + 
-  coord_cartesian(ylim = c(.5, 1)) + 
+  coord_cartesian(ylim = c(0, 1)) + 
   labs(title = "Across groups")
 
 plot_grid(to_next_plot, diverge_plot, labels = "AUTO")
 ```
+
 
 
 ## Distribution of parts of speech
@@ -710,11 +708,10 @@ pos_stats_modality <- read_rds(here(mod_loc, "summary", "pos_prob_scale_modality
   rename(Estimate = diff, lower = .lower, upper = .upper, Term = .category)
 ```
 
-The distributions of words and phrases used in descriptions changes as conventionalization occurs. For instance, definite or bare noun phrases may increase compared to indefinites [@isaacs1987; @brown-schmidt2016; @dahan2025], and more holistic or metaphorical descriptions may become more common relative to literal, shape-based, or part-based descriptions [@clark1986; @boyce2024]. As as illustration of how Refbank and natural language processing pipelines can be used to scale up reference game analyses, we focus on the change in the distribution of parts of speech. @hawkins2020dynamics found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. We are able to scale up this analysis to all the monolingual datasets in Refbank. We use Stanza to parse each message [@qi2020]. The part of speech distributions and full dependency parses are saved in derived tables in Refbank. 
+The distributions of words and phrases used in descriptions changes as conventionalization occurs. For instance, definite or bare noun phrases may increase compared to indefinites [@isaacs1987; @brown-schmidt2016; @dahan2025], and more holistic or metaphorical descriptions may become more common relative to literal, shape-based, or part-based descriptions [@clark1986; @boyce2024]. As an illustration of how Refbank and natural language processing pipelines can be used to scale up reference game analyses, we focus on the change in the distribution of parts of speech. @hawkins2020dynamics found that the distribution of parts of speech in describer utterances changes across repetitions, with nouns becoming relatively more common at the expense of closed-class words. We are able to scale up this analysis to all the monolingual datasets in Refbank. We use Stanza to parse each message [@qi2020]. The part of speech distributions and full dependency parses are saved in derived tables in Refbank. 
 
 For this analysis, we lump parts of speech into 6 coarse grained categories: nouns, verbs, modifiers (adjectives and adverbs), pronouns, determiners, and function words (adpositions, conjunctions, etc). We ran a mixed effects multinomial model with pronoun as the reference class, weighting each trial equally: `r form(pos_form) |> str_to_lower()`. After initial visualization suggested that spoken and written corpora might vary, we added modality (oral or written) as a predictor in an exploratory model.
-According to the model predictions, from the first to sixth repetition, the fraction of nouns is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decrease in frequency (`r stats_text(pos_stats,6)`). Other categories were less consistent. Modality makes the largest difference in the size of the noun boost (`r stats_text(pos_stats_modality,1)` for spoken versus `r stats_text(pos_stats_modality,2)` for written) and the direction of change for determiners, where determiner rate is neutral to increasing in spoken corpora (`r stats_text(pos_stats_modality, 9)`) and decreasing in written corpora (`r stats_text(pos_stats_modality, 10)`). The model predicted results from the model with modality are shown in Figure \ref{fig:pos-modality}. 
-
+According to the model predictions, from the first to sixth repetition, the fraction of nouns in describer utterances is expected to increase `r stats_text(pos_stats, 1)`, while function words (`r stats_text(pos_stats, 4)`) and pronouns decrease in frequency (`r stats_text(pos_stats,6)`). Other categories were less consistent. Modality makes the largest difference in the size of the noun boost (`r stats_text(pos_stats_modality,1)` for spoken versus `r stats_text(pos_stats_modality,2)` for written) and the direction of change for determiners, where determiner rate is neutral to increasing in spoken corpora (`r stats_text(pos_stats_modality, 9)`) and decreasing in written corpora (`r stats_text(pos_stats_modality, 10)`). The model predicted results from the model with modality are shown in Figure \ref{fig:pos-modality}. 
 
 ```{r pos-modality, fig.width=6, fig.height=3, fig.cap="Distribution in parts of speech over repetitions. Colored lines and ribbons are the predictions and 95%CrI from the model; faint lines are per-condition model predictions."}
 
@@ -727,23 +724,23 @@ read_rds(here(mod_loc, "predicted", "pos_log_mod_modality.rds")) |>
     pos == "DET" ~ "determiner",
     pos == "PRON" ~ "pronoun",
     pos == "FUNCTION" ~ "other function word"
-  )) |> 
-  plot_preds_pos("Reduction log lin") + labs(x = "Repetition number", y = "Fraction of describer words")
+  )) |> rename(round_num=rep_num) |> 
+  plot_preds_pos("Reduction log lin") + labs(x = "Repetition number", y = "Fraction")
 ```
 
 # Discussion
 
-Iterated reference games are a classic paradigm that has been used to study numerous aspects of dialogue and communication, and continues to be used in new ways, including as a way of assessing vision--language models. While iterated reference games share some core properties, games can also vary along a number of design parameters. In addition, iterated reference games are analysed in a number of different ways, with more datasets being studied on a subset of possible questions. Even for research questions that are commonly reported on, such as change in number of words over repetition, differences in design and modeling approach and reporting make it difficult to quantitatively synthesis results. Taken together, these factors mean that iterated reference games are a good candidate for a harmonized repository: data can be unified, data have high reuse value, and alternative synthesis methods such as meta-analysis are not as suitable. 
+Iterated reference games are a classic paradigm that have been used to study numerous aspects of dialogue and communication, and continues to be used in new ways, including as a way of assessing vision--language models. While iterated reference games share some core properties, games can also vary along a number of design parameters. In addition, iterated reference games are analysed in a number of different ways, with each dataset used to study a subset of possible questions. Even for research questions that are commonly reported on, such as change in number of words over repetition, differences in design and modeling approach and reporting make it difficult to quantitatively synthesize results. Taken together, these factors mean that iterated reference games are a good candidate for a harmonized repository: data can be unified, data have high reuse value, and alternative synthesis methods such as meta-analysis are not as suitable. 
 
 In this paper, we introduced Refbank, an open repository of iterated reference game data. We then presented a series of analyses using Refbank data, many of which would not have been feasible without the raw data from different experiments. 
 
 The functional relationship between utterance length and repetition is more robustly fit over a range of datasets, and we provide additional evidence that the relationship is roughly log-log or log-linear, confirming @bogels2026. Moreover, using the coded metadata, we were able to examine which design features have the largest impact on the slope of reduction. Knowing whether certain design features matter is important to experiment design, but requires large amounts and diversity of data to study. 
 
-Semantic trajectories have been analysed in iterated reference games before, but by scaling up a unified pipeline, we are able to analyse multiple datasets, including in different languages, in the same pipeline. We confirm that the trends of within game semantic convergence and between game semantic divergence, that had previously been observed in a few written-modality tangram studies extend to spoken studies, studies using other stimuli, and studies in different languages. 
+Semantic trajectories have been analysed in iterated reference games before, but by scaling up a unified pipeline, we are able to analyse multiple datasets, including in different languages, in the same pipeline. We confirm that the trends of within game semantic convergence and between game semantic divergence extend to spoken studies, studies using other stimuli, and studies in different languages. 
 
-The possibility for cross-dataset comparisons also allows Refbank to enable novel findings: in an analysis of distributions of part of speech across repetition, we found some divergences between spoken and typed paradigms, where noun proportion increased more sharply in typed datasets, and determiners increased in spoken datasets, but not written ones. This may reflect differences in the cost to produce different parts of speech in different modalities. A more telegraphic approach may be easier in typing where cost is per character, but in speaking, determiners and other short function words may be faster to say than to omit. This idea of differential cost based on modality suggests a direction for future work that more closely manipulates modality and cost in controlled, comparable experiments. 
+The possibility for cross-dataset comparisons also allows Refbank to enable novel findings: in an analysis of distributions of part of speech across repetition, we found some divergences between spoken and typed paradigms, where noun proportion increased more sharply in typed datasets, and determiners increased in spoken datasets but not written ones. This may reflect differences in the cost to produce different parts of speech in different modalities. A more telegraphic approach may be easier in typing where cost is per character, but in speaking, determiners and other short function words may be faster to say than to omit. This idea of differential cost based on modality suggests a direction for future work that more closely manipulates modality and cost in controlled, comparable experiments. 
 
-These analyses are a gesture towards what Refbank makes possible. By unifying datasets in a common framework, we make possible generalization of existing analyses to a larger collection of datasets, the use of new processing pipelines on the data as techniques arise, and the study of variation across datasets and design choices. The dataset is set-up for compatibility with natural language processing tools as pipelines can be created. 
+These analyses are a gesture towards what Refbank makes possible. By unifying datasets in a common framework, we make possible the generalization of existing analyses to a larger collection of datasets, the use of new processing pipelines on the data as techniques arise, and the study of variation across datasets and design choices. 
 
 ## Limitations
 
@@ -753,7 +750,7 @@ While Refbank has these limitations, it can also be used to identify gaps in the
 
 ## Conclusion 
 
-We encourage the sharing of iterated reference game data and hope that Refbank will house more games in the future. 
+We encourage the sharing of iterated reference game data and hope that Refbank will house more games in the future. [unclear where to stick this] Transcripts, selections, and metadata are not human subjects data under ... [TODO someone write this], and so likely can be shared. (could crib from the peekbank behavioral methods paper for how they framed this!) 
 
 Refbank can be used to study the moderators and generalizations of convention formation phenomena in iterated reference games, and identify gaps where future experiments could resolve theoretical questions. Refbank is also a corpus of task-specific dialogues that can be used for corpus linguistics, for assessing pragmatic phenomena in language models, and as a pedagogical resource for instructors and students alike.
 
