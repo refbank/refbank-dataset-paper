@@ -565,28 +565,16 @@ A very consistent finding across many iterated reference games is that the amoun
 
 While there are many possible functional relationships between repetition and number of words, here we consider four options in order to determine what general type of shape fits the data best. By using a larger number of datasets that vary in different ways, we avoid overfitting to the peculiarities of any one dataset. 
 
-```{r, eval=F}
-loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
-loo_log_lin <- readRDS(here(mod_loc, "loo_log_lin.rds"))
-loo_lin_log <- readRDS(here(mod_loc, "loo_lin_log.rds"))
-loo_lin_lin <- readRDS(here(mod_loc, "loo_lin_lin.rds"))
-loo_log_log_orig <- readRDS(here(mod_loc, "loo_log_log_orig_scale.rds"))
-
-loo_log_lin_orig <- readRDS(here(mod_loc, "loo_log_lin_orig_scale.rds"))
-
-loo_compare(list(log_log = loo_log_log_orig, log_lin = loo_log_lin_orig, 
-                 lin_log = loo_lin_log, lin_lin = loo_lin_lin)) |> 
-  write_rds(here(mod_loc, "summary", "loo.rds"))
-```
 
 ```{r}
-loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
+#loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
 
 red_form <- read_rds(here(mod_loc, "formulae", "red_mod_log_lin.rds"))
 
+# <!-- We consider relationships between round and words on either the raw or log scales for each. For each model we included mixed effects (e.g., `r form(red_form)`). We found that the best fitting model was log(words)~log(round), which was a better than log(words)~round (ELPD difference of `r loo_comparison[2,1] |> round()`, SE = `r loo_comparison[2,2] |> round()`). Models with a linear number of words were much worse (ELPD differences of `r loo_comparison[3,1] |> scales::comma()` and `r loo_comparison[4,1] |> scales::comma()`). -->
 ```
 
-We consider relationships between round and words on either the raw or log scales for each. For each model we included mixed effects (e.g., `r form(red_form)`). We found that the best fitting model was log(words)~log(round), which wsa better than log(words)~round (ELPD difference of `r loo_comparison[2,1] |> round()`, SE = `r loo_comparison[2,2] |> round()`). Models with a linear number of words were much worse (ELPD differences of `r loo_comparison[3,1] |> scales::comma()` and `r loo_comparison[4,1] |> scales::comma()`). 
+
 
 ```{r}
 red_stats <- read_rds(here(mod_loc, "summary", "red_mod_log_log.rds")) 
@@ -643,7 +631,7 @@ Similarity metrics can be affected by sentence length, so as a robustness check,
 
 As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another [@hawkins2020dynamics; @boyce2024]. To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same round and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log round. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B. Not all conditions show increasing divergence; we speculate that image type, absence of a backchannel, or dataset specific factors may play a role. <!-- VB note: the 5 that go up include 3 conditions with single message & no-backchannel (hawkins2019_continual easy) and the two ji et al pilots; and then 2 conditions from expt 1 of yoon.  --> 
 
-Controlling for description lengths, the decrease in similarity across games was smaller, but still substantial (`r stats_text(to_next_stats_words, 2)`). 
+Controlling for description lengths, the decrease in similarity across games was smaller, but still substantial (`r stats_text(diverge_stats_words, 2)`). 
 
 ```{r vectorsem, fig.width=6, fig.height=3, fig.cap="Cosine similarities between a description and the next round description from the same game (A) or descriptions from the same round and different games (B). Blue line shows the overall model prediction and 95% CrI, faint lines show per-condition predictions. "}
 
