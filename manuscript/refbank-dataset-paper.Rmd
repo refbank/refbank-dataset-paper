@@ -24,7 +24,7 @@ affiliation:
 authornote: |
   TODO
 abstract: |
-  [revisit and fix later] Language is an extensible form of communication that can be used to talk about even novel referents. Even when no canonical name exists, people rapidly form shared object-meaning mappings when they have repeated need to communicate about new things. The formation and adaptation of labels for initially novel referents is frequently studied in iterated reference games where a group of people communicate with each other about the same set of potential referents over a series of rounds. While iterated reference games are a common paradigm, the research questions and pre-processing and analysis approaches differ paper to paper so the results cannot be quantitatively synthesized. However, the text and meta-data itself is rich and has high value for re-analysis. We collect iterated reference game data from different papers together into a harmonized repository: Refbank. Refbank is a versioned repository containing transcripts and meta-data from 19 datasets. We explain the process for adding datasets to Refbank, what the schema is and what information is stored, how researchers can access Refbank, and we show some example analyses on Refbank data. Refbank allows for larger-scale analyses, the study of moderators, and training on reference game data.
+  Language is an extensible form of communication that can be used to talk about even novel referents. Even when no canonical name exists, people rapidly form shared object-meaning mappings when they have repeated need to communicate about new things. The formation and adaptation of labels for initially novel referents is frequently studied in iterated reference games where a group of people communicate with each other about the same set of potential referents over a series of rounds. While iterated reference games are a common paradigm, the research questions and pre-processing and analysis approaches differ paper to paper so the results cannot be quantitatively synthesized.  We collect iterated reference game data from different papers together into a harmonized repository: Refbank. Using Refbank to analyse data from 19 datasets, we found a log-log relationship between round number and the number of words used in descriptions that is moderated by experimental features including participants' age group (child or adult), presence of a backchannel, and number of image options. Across modalities and languages, we confirmed general trends of semantic convergence within a game and semantic divergence between games. However, the words that get dropped as descriptions shorten vary between spoken and written datasets, with spoken datasets retaining determiners and nouns, and written datasets retaining primarily nouns.  Refbank allows for larger-scale analyses, the study of moderators, and training on reference game data. [fix last sentence]
 keywords: TODO
 wordcount: TODO
 bibliography: RefBank.bib
@@ -211,11 +211,11 @@ As reviewed above, different researchers have used iterated reference games with
 
 Compared to common alternatives, raw data aggregation is an especially useful method for iterated reference games. Systematic reviews are one possible method for evidence synthesis, and can be helpful to map the conceptual and methodological space [@bovet2023]; however, they do not offer quantitative aggregation of results, which is critical in psycholinguistic research since qualitative predictions are often similar across theories. Another common approach for evidence synthesis is meta-analysis; unfortunately, the iterated reference game literature is not ideal for meta-analysis because studies report results for different questions and use different measures for the same questions. Additionally, language data of the kind generated in iterated reference games are very rich and amenable to many different possible analyses, which may not be captured by aggregation into effect sizes, a necessary step in meta-analysis.
 
-In contrast,alignment of raw data in a shared framework (sometimes called “mega-analysis”) enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. The mega-analytic approach has been used to pool data of various types in the language acquisition space, including transcripts of child--parent interactions [CHILDES, @macwhinney2000], parent reports of early vocabulary [wordbank,  @frank2017], and data from the looking-while-listening paradigm [peekbank, @zettersten2022]. Similar approaches are used in neuroscience such as in the OpenNeuro repository [@markiewicz2021].  [TODO are there other examples we should include?]
+In contrast, alignment of raw data in a shared framework (sometimes called “mega-analysis”) enables the reuse of high value data by putting it all in one place in a common format and making it easily accessible. The mega-analytic approach has been used to pool data of various types in the language acquisition space, including transcripts of child--parent interactions [CHILDES, @macwhinney2000], parent reports of early vocabulary [wordbank,  @frank2017], and data from the looking-while-listening paradigm [peekbank, @zettersten2022]. Similar approaches are used in neuroscience such as in the OpenNeuro repository [@markiewicz2021].  [TODO are there other examples we should include?]
 
 One advantage of harmonized dataset repositories is that new analytic approaches can be used on the data, including approaches that may not have been available when some data was originally collected (e.g., semantic vector embeddings), or approaches that rely on cross-study data [@frank2021]. Many of the images used in iterated reference games appear in the Kilogram dataset [@ji2022] which contains whole-image and parts-level descriptions for over a thousand tangram images. Thus a harmonized dataset of reference game data can also be connected with this other resource to enable image-specific predictions. 
 
-
+There are some key questions about iterated reference games that are best answered with mega-analysis. While datasets consistently show increasing efficiency in picking out a target over rounds (indexed by number of conversational turns, total number of words, words from the describer, or length of describer's first utterance, among other measures), there are open questions around the shape of this reduction curve, which @boegels2026 suggests is a power law on the basis of different measures from 2 datasets. Checking these patterns across more datasets is important to constraining mechanistic explanations of reduction. Another question is how different experimental factors, including experiment modality and the design of the communication channel, affect the process of convention formation, which is only testable when there is variation in these factors. Finally, some recent datasets have used NLP tools to look at changes in semantics and part of speech over the convergence process, and mega-analysis can extend these analyses across a broader set of datasets, to look for generalizability across languages, and modalities. CITATIONS
 
 
 
@@ -236,7 +236,7 @@ dataset_summary_stats <- condition_summary |> summarize(
 )
 ```
 
-To enable the reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}). In the following sections, we explain the schema of Refbank and what information it contains, describe how researchers can access the data, and show a few analyses on Refbank data to demonstrate its utility. 
+To enable the reuse of iterated reference game datasets, we present Refbank, an open repository of iterated reference game data. Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}). In the following sections, we explain the schema of Refbank and what information it contains and describe how researchers can access the data. We then use Refbank to address 5 analytic questions about the generalizability and moderation of iterated reference game phenomena. 
 
 # Design and technical approach
 
@@ -441,6 +441,8 @@ Metadata was coded from the data and from the paper or write-up. In a few cases,
 
 Some of the contributed datasets had additional information beyond the shared metrics. We do not include these additional data (such as pre- or post- tests, mouse or eye tracking, fMRI data, or audio files). 
 
+TODO discuss that we verified against original where possible 
+
 ## Current datasets
 
 Refbank currently has data from `r dataset_summary_stats$datasets[1] |> scales::comma()` datasets including `r dataset_summary_stats$words[1] |> scales::comma()` words from `r dataset_summary_stats$trials[1] |> scales::comma()` referential trials from `r dataset_summary_stats$games[1] |> scales::comma()` games and `r dataset_summary_stats$players[1] |> scales::comma()` participants (Table \ref{tab:tab2}).
@@ -525,6 +527,7 @@ Redivis has built-in methods of filtering, exploring, and downloading data, via 
 
 Different workflows support different possible uses including scientific research and training. The API format makes them usable including in larger pipelines and is compatible with coding agents [cite anthropic blogpost?]. 
 
+TODO mention validation summary on website 
 \smallskip
 
 # Analyses
@@ -567,26 +570,27 @@ While there are many possible functional relationships between repetition and nu
 
 
 ```{r}
-#loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
+loo_comparison <-  read_rds(here(mod_loc, "summary", "loo.rds"))
 
 red_form <- read_rds(here(mod_loc, "formulae", "red_mod_log_lin.rds"))
 
-# <!-- We consider relationships between round and words on either the raw or log scales for each. For each model we included mixed effects (e.g., `r form(red_form)`). We found that the best fitting model was log(words)~log(round), which was a better than log(words)~round (ELPD difference of `r loo_comparison[2,1] |> round()`, SE = `r loo_comparison[2,2] |> round()`). Models with a linear number of words were much worse (ELPD differences of `r loo_comparison[3,1] |> scales::comma()` and `r loo_comparison[4,1] |> scales::comma()`). -->
+
 ```
 
-
+We consider relationships between round and words on either the raw or log scales for each. For each model we included mixed effects (e.g., `r form(red_form)`). We found that the best fitting model was log(words)~log(round), which was a better than log(words)~round (ELPD difference of `r loo_comparison[2,1] |> round()`, SE = `r loo_comparison[2,2] |> round()`). Models with a linear number of words were much worse (ELPD differences of `r loo_comparison[3,1] |> scales::comma()` and `r loo_comparison[4,1] |> scales::comma()`).
 
 ```{r}
 red_stats <- read_rds(here(mod_loc, "summary", "red_mod_log_log.rds")) 
+
 ```
 
 Using the best fitting log-log model, we confirm the common finding that there is a substantial decrease in the number of words over rounds (Figure \ref{fig:accred}B). There was a change of `r stats_text(red_stats, 2)` log words per log round number. 
 
 ## Reduction moderators
 
-One analysis enabled by the aggregation of data across studies is the examination of the possible effects of experiment design features on the rate of reduction -- that is, whether some conditions result in faster reduction than others. For this analysis, we used the log(words)~log(round) model and TODO 
+One analysis enabled by the aggregation of data across studies is the examination of the possible effects of experiment design features on the rate of reduction -- that is, whether some conditions result in faster reduction than others. For this analysis, we used the log(words)~log(round) model and added moderators as predictors of slope change. We used the moderators coded in the conditions table, but groups some of the 3-value ones into 2-value ones. The moderators we considered were population (only adults vs children or child/parent), backchannel (full vs limited or none), feedback (full versus limited or none), modality (oral vs written), role constancy, number of image options, and number of players. We log transformed predictors that were not binary. Partner constancy is listed in the conditions table, but this analysis was run only on stage 1 data before any partner changes occurred, so we did not include it as a predictor. We did not include interactions between predictors. Some predictors may be correlated based on their distribution across datasets. 
 
-```{r red-mod, fig.width=6, fig.height=3, fig.cap="TODO"}
+```{r red-mod, fig.width=6, fig.height=3, fig.cap="Coefficients for different predictors interacting with log round in a log-log reduction model. Point estimates and 95% CrI are shown. Negative values indicate faster reduction. "}
 
 
 read_rds(here(mod_loc, "summary", "red_mod_log_log_all_moderators.rds")) |>
@@ -601,10 +605,10 @@ read_rds(here(mod_loc, "summary", "red_mod_log_log_all_moderators.rds")) |>
     predictor=="feedback_binrestricted" ~ "no or limited feedback",
     predictor=="backchannel_binrestricted" ~ "no or limited backchannel",
   )) |> arrange(Estimate) |>
-  ggplot(aes(x=reorder(predictor, Estimate, mean), y=Estimate, ymin=lower, ymax=upper))+geom_pointrange()+geom_hline(yintercept=0)+coord_flip()+labs(x="predictors", y="change in slope (negative=faster)")
+  ggplot(aes(x=reorder(predictor, Estimate, mean), y=Estimate, ymin=lower, ymax=upper))+geom_pointrange()+geom_hline(yintercept=0)+coord_flip()+labs(x="Predictors", y="Change in slope ")
 ```
 
-Figure \ref{fig:red-mod} shows TODO
+Figure \ref{fig:red-mod} shows the fitted coefficients for the different predictors. Games with children, games with no or limited backchannel, and games with larger numbers of images had slower reduction in the number of words. Group size had no effect on reduction. Limited or no feedback, constant role, and spoken games all had point estimates of faster reduction, with uncertainty over direction and magnitude of the effect. 
 
 ## Semantic embedding similarities
 
@@ -629,9 +633,7 @@ Within a game, the similarity between descriptions to the same target in adjacen
 
 Similarity metrics can be affected by sentence length, so as a robustness check, we ran a model controlling for the length of both descriptions. Controlling for description lengths, the increase in similarity between adjacent rounds was smaller, but still substantial (`r stats_text(to_next_stats_words, 2)`). 
 
-As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another [@hawkins2020dynamics; @boyce2024]. To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same round and target, but a different game in the same condition. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log round. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B. Not all conditions show increasing divergence; we speculate that image type, absence of a backchannel, or dataset specific factors may play a role. <!-- VB note: the 5 that go up include 3 conditions with single message & no-backchannel (hawkins2019_continual easy) and the two ji et al pilots; and then 2 conditions from expt 1 of yoon.  --> 
-
-Controlling for description lengths, the decrease in similarity across games was smaller, but still substantial (`r stats_text(diverge_stats_words, 2)`). 
+As games converge to a variety of different, arbitrary conventionalized names, these descriptions often become differentiated from one another [@hawkins2020dynamics; @boyce2024]. To test for divergence between different games, we ran a mixed effects ordered beta regression model `r form(diverge_form)` predicting the average distance of a description to other descriptions for the same round and target image, but a different game in the same condition. We included averaged similarities when there were at least 4 descriptions to compare to. In this model, the similarity between descriptions from different games changes by  `r stats_text(diverge_stats, 2)` per log round. The predicted trajectories for a generic reference game and each individual condition are shown in Figure \ref{fig:vectorsem}B. Controlling for description lengths, the decrease in similarity across games was smaller, but still substantial (`r stats_text(diverge_stats_words, 2)`). 
 
 ```{r vectorsem, fig.width=6, fig.height=3, fig.cap="Cosine similarities between a description and the next round description from the same game (A) or descriptions from the same round and different games (B). Blue line shows the overall model prediction and 95% CrI, faint lines show per-condition predictions. "}
 
