@@ -8,6 +8,9 @@
 #SBATCH --error=slurm_logs/red_pred_all_moderators_%j.err
 
 module load R/4.4.2
+
+export R_LIBS_USER="$HOME/.Rlibs/refbank-dataset-paper/4.4.2"
+mkdir -p "$R_LIBS_USER"
 export TBB_CXX_TYPE=gcc
 
 Rscript code/run_reduction_pred_mod_all_moderators.R

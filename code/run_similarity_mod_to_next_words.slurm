@@ -8,6 +8,9 @@
 #SBATCH --error=slurm_logs/sim_to_next_words_%j.err
 
 module load R/4.4.2
+
+export R_LIBS_USER="$HOME/.Rlibs/refbank-dataset-paper/4.4.2"
+mkdir -p "$R_LIBS_USER"
 export TBB_CXX_TYPE=gcc
 
 Rscript code/run_similarity_mod_to_next_words.R
