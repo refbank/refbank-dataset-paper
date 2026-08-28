@@ -28,7 +28,7 @@ affiliation:
 - id: '2'
   institution: Stanford University
 - id: '3'
-  institution: University of Wisonsin -- Madison
+  institution: University of Wisconsin -- Madison
 - id: '4'
   institution: University of California -- San Diego
 authornote: |
@@ -257,7 +257,7 @@ There are some key questions about iterated reference games that are best answer
 
 
 ```{r}
-version <- "v13.1"
+version <- "v13.3"
 
 ### get data from redivis
 datasets <- get_datasets(version = version)
@@ -393,7 +393,7 @@ data_features_all <- dataset_features |>
     # `Option set size`=option_set_size,
     # `Trials / game` = trials_per_game,
     # `Repetitions / game` = reps_per_game,
-    `Role constancy` = partner_constancy,
+    `Role constancy` = role_constancy,
     `Partner constancy` = partner_constancy,
     `Feedback?` = feedback,
     `Backchannel?` = backchannel
@@ -408,7 +408,7 @@ data_features_all |>
     booktabs = TRUE,
     escape = F,
     linesep = "",
-    caption = "Design features of each dataset. `ltd' is used as an abbrevation of limited. Multiple values indicate that the paper reported on different conditions that varied in the given feature.",
+    caption = "Design features of each dataset. `ltd' is used as an abbreviation of limited. Multiple values indicate that the paper reported on different conditions that varied in the given feature.",
     col.names = linebreak(
       c(
         "Paper", "Language", "Modality",

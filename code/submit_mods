@@ -1,0 +1,13 @@
+#!/bin/bash
+# Submits every model-fitting slurm job. Excludes install_deps.slurm (one-time
+# setup, not a model run) and run_reduction_loo.slurm (run separately -- it
+# depends on the other reduction models already being fit).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+for job in code/run_*.slurm; do
+  if [ "$job" = "code/run_reduction_loo.slurm" ]; then
+    continue
+  fi
+  sbatch "$job"
+done
