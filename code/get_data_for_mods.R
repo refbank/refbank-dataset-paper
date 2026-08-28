@@ -6,7 +6,7 @@ library(readr)
 library(here)
 # favorite_datasets <- c("boyce2024_interaction", "hawkins2020_characterizing")
 
-version <- "v13.2"
+version <- "v13.3"
 
 ### get data from redivis
 conditions <- get_conditions(version = version)
