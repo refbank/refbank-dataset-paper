@@ -3,7 +3,21 @@ library(brms)
 library(rstan)
 library(tidybayes)
 library(here)
+source(here("code", "mod_data_counts.R"))
 mod_loc <- "cached_model_files/mods"
+
+
+# How much data actually went into a fitted model: mod$data is one row per
+# trial/observation (brm() only keeps the rows/columns it fit on), so nrow()
+# is the trial count and n_distinct(dataset_id) is how many source datasets
+# contributed. Used by save_preds.R to build a per-model summary table.
+mod_data_counts <- function(mod) {
+  stopifnot("mod$data must have a dataset_id column" = "dataset_id" %in% names(mod$data))
+  tibble(
+    n_trials = nrow(mod$data),
+    n_datasets = n_distinct(mod$data$dataset_id)
+  )
+}
 
 
 do_preds <- function(mod) {
@@ -98,7 +112,9 @@ do_model <- function(path) {
   ) {
     do_preds(model) |> write_rds(here(mod_loc, "predicted", path))
   }
+  counts <- mod_data_counts(model)
   gc()
+  counts
 }
 
 # this one takes a lot of ram when running, so may need to be run separately for the predictors
@@ -106,8 +122,13 @@ do_model <- function(path) {
 
 mods <- list.files(path = here(mod_loc), pattern = ".*rds") |>
   discard(\(x) str_detect(x, "loo")) |>
-  discard(\(x) str_detect(x, "red_mod_lin")) |>
-  walk(~ do_model(.))
+  discard(\(x) str_detect(x, "red_mod_lin"))
+
+mods |>
+  set_names(tools::file_path_sans_ext(mods)) |>
+  map(do_model) |>
+  bind_rows(.id = "model") |>
+  write_rds(here(mod_loc, "summary", "model_data_counts.rds"))
 
 
 loo_log_log <- readRDS(here(mod_loc, "loo_log_log.rds"))
