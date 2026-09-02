@@ -104,7 +104,7 @@ do_model <- function(path) {
   save_summary(model) |> write_rds(here(mod_loc, "summary", path))
   model$formula |> write_rds(here(mod_loc, "formulae", path))
   if (path %in% c(
-    # "pos_log_mod_modality.rds",
+    "pos_log_mod_modality.rds",
     "acc_mod_log_rep.rds", "diverge_mod.rds",
     "pos_log_mod.rds", "red_mod_log_log.rds", "red_mod_log_lin.rds",
     "to_next_mod.rds"
@@ -118,7 +118,7 @@ do_model <- function(path) {
 }
 
 # this one takes a lot of ram when running, so may need to be run separately for the predictors
-# do_model("pos_log_mod_modality.rds")
+do_model("pos_log_mod_modality.rds")
 
 mods <- list.files(path = here(mod_loc), pattern = ".*rds") |>
   discard(\(x) str_detect(x, "loo")) |>
