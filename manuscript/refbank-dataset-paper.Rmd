@@ -34,11 +34,11 @@ affiliation:
 authornote: |
  Credit taxonomy: Conceptualization, methodology -- VB, AWMT, MCF, RDH; Software, formal analysis, visualisation, writing (original draft) -- VB, AWMT; Data curation, validation, writing (reviewing & editing) -- all authors; Supervision, resources -- RDH; Funding acquisition, project administration -- MCF
  
- AI coding agents (primarily claude-sonnet-5) were used for coding (including some code implementation, debugging, code review, and code refactoring), check data import, and proofreading. All text was written by human authors. 
+ AI coding agents (primarily claude-sonnet-5) were used for coding (including some code implementation, debugging, code review, and code refactoring), checking data import, and proofreading. All text was written by human authors. 
 abstract: |
   Language users flexibly produce and interpret language in context, and over time modulate their language use to convey meanings with greater accuracy and efficiency. Adaptive language use is often studied using iterated reference games, which represent a controlled way of studying how people communicate in the absence of codified labels, and how conventionalised labels form over repeated reference to the same targets. While iterated reference games are a common paradigm, the research questions, pre-processing, and analytic approaches differ across papers so their results are challenging to synthesise using meta-analysis. Here, we present Refbank, a harmonised repository of iterated reference game data from 20 different papers, enabling quantitative synthesis in novel and larger-scale analyses. We conduct five mega-analyses that shed light on the robustness and variability of convention formation under different experimental settings. Refbank also has potential future uses for targeted experiment design, computational modelling, and language model evaluation. These directions demonstrate the utility of reusing data from iterated reference games, and we invite contributions of additional datasets to Refbank.
 keywords: convention formation; communication; iterated reference game; mega-analysis; evidence synthesis
-wordcount: 7339
+wordcount: 7353
 bibliography: RefBank.bib
 floatsintext: true
 linenumbers: true
