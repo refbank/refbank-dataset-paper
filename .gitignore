@@ -32,6 +32,8 @@ vignettes/*.pdf
 *_cache/
 /cache/
 *_files/
+# cached_model_files/ matches *_files/ but is not knitr output; its large fits are ignored further down
+!cached_model_files/
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
@@ -57,8 +59,14 @@ rsconnect/
 *.gz
 *.wmf
 *.svg
+# Figure 1 (made by code/make_schema_diagram.R). The Rmd includes the .svg, but
+# the PDF build uses the .png: LaTeX can't read svg, so knitr drops the extension
+# and pdflatex finds the .png.
+!manuscript/figs/schema_v3_solarized.svg
+!manuscript/figs/schema_v3_solarized.png
 
 cached_model_files/mods/*.rds
+cached_model_files/mods.zip
 
 *.DS_Store
 

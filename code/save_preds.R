@@ -7,19 +7,6 @@ source(here("code", "mod_data_counts.R"))
 mod_loc <- "cached_model_files/mods"
 
 
-# How much data actually went into a fitted model: mod$data is one row per
-# trial/observation (brm() only keeps the rows/columns it fit on), so nrow()
-# is the trial count and n_distinct(dataset_id) is how many source datasets
-# contributed. Used by save_preds.R to build a per-model summary table.
-mod_data_counts <- function(mod) {
-  stopifnot("mod$data must have a dataset_id column" = "dataset_id" %in% names(mod$data))
-  tibble(
-    n_trials = nrow(mod$data),
-    n_datasets = n_distinct(mod$data$dataset_id)
-  )
-}
-
-
 do_preds <- function(mod) {
   is_multinomial <- isTRUE(mod$family$family == "multinomial")
 

@@ -628,12 +628,15 @@ Not all datasets included accuracy data on the trial level, so these results com
 acc_stats <- read_rds(here(mod_loc, "summary", "acc_mod_log_rep.rds")) |> 
   mutate(across(c("Estimate", "lower", "upper"), exp))
 
+acc_12_stats <- read_rds(here(mod_loc, "summary", "acc_round_slope_at_12_options.rds")) |> 
+  mutate(across(c("Estimate", "lower", "upper"), exp))
+
 acc_form <- read_rds(here(mod_loc, "formulae", "acc_mod_log_rep.rds"))
 ```
 
 To aggregate across datasets, we ran a mixed-effect logistic regression model `r form(acc_form)` to model the correctness of each selection from each matcher. For computational tractability, we do not include per-group or per-individual random effects and we use uncorrelated random slopes and random intercepts. We include the number of options as a predictor since this affects the baseline chance of correct selections. This and other regression models were run using brms [@brms]; this model used priors of normal(0, .5) for beta and sd, and normal(1,1) for intercept.
 
-The fitted predictions are shown in Figure \ref{fig:accred}A. The overall fit line is shown for a 12 image option set. Consistent with previous findings, accuracy is generally high to start with, but also increases over rounds (odds ratio of one log-round later `r stats_text(acc_stats, 2)`). 
+The fitted predictions are shown in Figure \ref{fig:accred}A. The overall fit line is shown for a 12 image option set. Consistent with previous findings, accuracy is generally high to start with, but also increases over rounds (odds ratio of one log-round later `r stats_text(acc_12_stats, 2)`). 
 
 ## Reduction of utterance length
 
@@ -840,7 +843,7 @@ The functional relationship between utterance length and round is more robustly 
 
 Semantic trajectories have been analysed in iterated reference games before, but by scaling up a unified pipeline, we are able to analyse multiple datasets, including in different languages, in the same pipeline. We confirm that the trends of within game semantic convergence and between game semantic divergence extend to spoken studies, studies using other stimuli, and studies in different languages. 
 
-Cross-dataset comparisons also allow Refbank to enable novel findings: In an analysis of distributions of part of speech across round, we found some divergences between spoken and typed paradigms, where noun proportion increased more sharply in typed datasets, and determiners increased in spoken datasets but not written ones. This may reflect differences in the cost to produce different parts of speech in different modalities. A more telegraphic approach may be easier in typing where cost is per character, but in speaking, determiners and other short function words may be easier to say than to omit. This idea of differential cost based on modality suggests a direction for future work that more closely manipulates modality and cost in controlled, comparable experiments. 
+Cross-dataset comparisons also allow Refbank to enable novel findings: In an analysis of distributions of part of speech across round, we found some divergences between spoken and typed paradigms, where noun proportion increased more sharply in typed datasets, and determiners increased slightly in spoken datasets but not written ones. This may reflect differences in the cost to produce different parts of speech in different modalities. A more telegraphic approach may be easier in typing where cost is per character, but in speaking, determiners and other short function words may be easier to say than to omit. This idea of differential cost based on modality suggests a direction for future work that more closely manipulates modality and cost in controlled, comparable experiments. 
 
 By unifying datasets in a common framework, we make possible the generalisation of existing analyses to a larger collection of datasets, the use of new processing pipelines on the data as techniques arise, and the study of variation across datasets and design choices. Additionally, harmonising raw data retains individual- and dyad-level patterns, which are important for individual difference analyses, and generative and computational approaches which require raw data to compare against. For example, iterated reference games can be used to assess the extent to which language models are able to communicate like humans, and actual trial-by-trial data are the most useful for such comparisons [@tan2026bananaman]. 
 

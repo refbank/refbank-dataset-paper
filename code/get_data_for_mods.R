@@ -40,6 +40,7 @@ combined_conditions <- trials |>
 valid_trials_misc <- trials |>
   filter(!exclusion_reason %in% c("describer didn't talk", "speaker typed nonsense")) |>
   left_join(conditions) |>
+  # bangerter2020's expt*_new conditions repeat its earlier conditions, so they are dropped
   filter(!condition_label %in% c("expt1_new", "expt2_new", "expt3_new"))
 
 valid_trials_messages <- messages |>
@@ -166,7 +167,7 @@ diverge <- diverge_filter |>
   bind_rows(diverge_filter |> mutate(game_id = game_id_2)) |>
   group_by(sim_type, game_id, target_image, condition_id, dataset_id, round_num, stage_num) |>
   summarize(sim = mean(sim, na.rm = T), n = n()) |>
-  filter(n > 3) |> # since we collapse, make sure we are collapsing over conditions with at least 5 to compare within/among
+  filter(n > 3) |> # since we collapse, make sure we are collapsing over conditions with at least 4 to compare within/among
   ungroup()
 
 diverge_trial_lookup <- valid_trials_games |>

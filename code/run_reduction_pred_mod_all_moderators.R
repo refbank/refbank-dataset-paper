@@ -54,11 +54,9 @@ stopifnot(
 # we care about each moderator's interaction with round_num (does it change the
 # rate of reduction), not its intercept (does it change overall verbosity) --
 # so every moderator enters only via its interaction with log_round_num.
-# backchannel_bin and modality_bin additionally interact with each other, still
-# only through their joint interaction with log_round_num (no bare
-# backchannel_bin:modality_bin term): log_round_num:(backchannel_bin*modality_bin)
-# expands to log_round_num:backchannel_bin + log_round_num:modality_bin +
-# log_round_num:backchannel_bin:modality_bin.
+# backchannel_bin and modality_bin enter separately, without a
+# backchannel x modality interaction: no oral condition has restricted
+# backchannel, so that interaction isn't estimable.
 
 
 # it doesn't make sense to do partner constancy when we filter to stage 1 --
@@ -79,5 +77,8 @@ red_mod_log_log_all_moderators <- brm(
   file_refit = "on_change",
   prior = log_dv_priors,
   save_pars = save_pars(all = TRUE),
+  # with the default max_treedepth = 10, 1,033 of 4,000 post-warmup
+  # transitions hit the limit
+  control = list(max_treedepth = 15),
   data = per_describer_for_model |> filter(!is.na(log_words)) |> filter(stage_num == 1)
 )
