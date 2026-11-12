@@ -636,7 +636,7 @@ acc_form <- read_rds(here(mod_loc, "formulae", "acc_mod_log_rep.rds"))
 
 To aggregate across datasets, we ran a mixed-effect logistic regression model `r form(acc_form)` to model the correctness of each selection from each matcher. For computational tractability, we do not include per-group or per-individual random effects and we use uncorrelated random slopes and random intercepts. We include the number of options as a predictor since this affects the baseline chance of correct selections. This and other regression models were run using brms [@brms]; this model used priors of normal(0, .5) for beta and sd, and normal(1,1) for intercept.
 
-The fitted predictions are shown in Figure \ref{fig:accred}A. The overall fit line is shown for a 12 image option set. Consistent with previous findings, accuracy is generally high to start with, but also increases over rounds (odds ratio of one log-round later `r stats_text(acc_12_stats, 2)`). 
+The fitted predictions are shown in Figure \ref{fig:accred}A. The overall fit line is shown for a 12 image option set. Consistent with previous findings, accuracy is generally high to start with, but also increases over rounds (odds ratio of one log-round later `r stats_text(acc_12_stats, 1)`). 
 
 ## Reduction of utterance length
 
